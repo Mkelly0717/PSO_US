@@ -1,9 +1,5 @@
---------------------------------------------------------
---  DDL for Procedure U_8D_IGPTABLES
---------------------------------------------------------
-set define off;
-
-  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_8D_IGPTABLES" as
+create or replace
+procedure         u_8d_igptables as
 
 begin
 
@@ -22,7 +18,9 @@ update igpmgr.intjobs ij
    set insertct=0,
        updatect=0,
        totalrowsct=0
-   where ij.jobid='INT_JOB'
+   where ij.jobid in ( 'U_30_SRC_DAILY_PART1'
+                      ,'U_30_SRC_DAILY_PART2'
+                      )
      and ij.int_tablename='INTINS_SOURCING';
 
 update igpmgr.intjobs ij
@@ -34,6 +32,3 @@ update igpmgr.intjobs ij
 
 
 end;
-
-/
-
