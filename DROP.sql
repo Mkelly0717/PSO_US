@@ -1,3 +1,4 @@
+  /* THis is a sql to drop of of teh tabels for rebuilding */
   DROP PROCEDURE "SCPOMGR"."U_10_SKU_BASE";
   DROP PROCEDURE "SCPOMGR"."U_11_SKU_STORAGE";
   DROP PROCEDURE "SCPOMGR"."U_15_SKU_WEEKLY";
