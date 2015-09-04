@@ -1,9 +1,5 @@
---------------------------------------------------------
---  DDL for Procedure U_30_SRC_DAILY
---------------------------------------------------------
-set define off;
-
-  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_30_SRC_DAILY" as
+create or replace
+PROCEDURE           "U_30_SRC_DAILY" as
 
 begin
 
@@ -14,7 +10,8 @@ scpomgr.u_8d_sourcing;
 /******************************************************************
 ** Part 1: create one sourcing record for each exclusive TPM SKU  * 
 *******************************************************************/
-insert into intups_sourcing ( item, dest, source, transmode, eff, factor, arrivcal
+insert into intups_sourcing ( integration_jobid
+                      ,item, dest, source, transmode, eff, factor, arrivcal
                       ,majorshipqty, minorshipqty, enabledyndepsw
                       ,shrinkagefactor, maxshipqty, abbr, sourcing, disc
                       ,maxleadtime, minleadtime, priority, enablesw, yieldfactor
@@ -26,7 +23,8 @@ insert into intups_sourcing ( item, dest, source, transmode, eff, factor, arrivc
                       ,ordergroupmember, lotsizesenabledsw
                       ,convenientadjdownpct
                       )
-select distinct u.item, u.dest, u.source, 'TRUCK' transmode, v_init_eff_date eff
+select distinct 'U_30_SRC_DAILY_PART1', u.item, u.dest, u.source
+      , 'TRUCK' transmode, v_init_eff_date eff
       ,1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw
       ,0 shrinkagefactor, 0 maxshipqty, ' ' abbr, 'ISS1EXCL' sourcing
       ,v_init_eff_date disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime
@@ -75,7 +73,9 @@ commit;
 **           3) Number of sources ranked by cost < loc.u_max_src
 *******************************************************************************/
 --  First do the 5digit zip to 5 digit zip. because union takes too long
-insert into sourcing ( item, dest, source, transmode, eff,     factor, arrivcal
+insert into igpmgr.intins_sourcing 
+                    ( integration_jobid
+                      ,item, dest, source, transmode, eff,     factor, arrivcal
                       ,majorshipqty, minorshipqty, enabledyndepsw,shrinkagefactor
                       ,maxshipqty, abbr, sourcing, disc, maxleadtime, minleadtime
                       ,priority, enablesw, yieldfactor, supplyleadtime
@@ -87,7 +87,8 @@ insert into sourcing ( item, dest, source, transmode, eff,     factor, arrivcal
                       ,ordergroupmember, lotsizesenabledsw, convenientadjdownpct
                      )
 
-select distinct ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
+select distinct 'U_30_SRC_DAILY_PART2'
+      ,ranked_lanes.item, ranked_lanes.dest,ranked_lanes.source
       ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
       ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
       ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC' sourcing, v_init_eff_date disc
@@ -280,7 +281,9 @@ and src.item is null;
 
 commit;
 -- Next do the 3 digit zip to 3 digit zip
-insert into sourcing ( item, dest, source, transmode, eff, factor, arrivcal
+insert into igpmgr.intins_sourcing 
+                     ( integration_jobid
+                      ,item, dest, source, transmode, eff, factor, arrivcal
                       ,majorshipqty, minorshipqty, enabledyndepsw
                       ,shrinkagefactor, maxshipqty, abbr, sourcing, disc
                       ,maxleadtime, minleadtime, priority, enablesw
@@ -293,7 +296,8 @@ insert into sourcing ( item, dest, source, transmode, eff, factor, arrivcal
                       ,lotsizesenabledsw, convenientadjdownpct
                      )
 
-select distinct ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
+select distinct 'U_30_SRC_DAILY_PART2B'
+      ,ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
       ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
       ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
       ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC' sourcing, v_init_eff_date disc
@@ -491,7 +495,9 @@ commit;
 **     5 digit zip code level, This code needs to be repeated at that level!!!!
 *******************************************************************************/
 
-insert into sourcing ( item, dest, source, transmode, eff, factor, arrivcal
+insert into igpmgr.intins_sourcing 
+                     ( integration_jobid
+                      ,item, dest, source, transmode, eff, factor, arrivcal
                       ,majorshipqty, minorshipqty, enabledyndepsw
                       ,shrinkagefactor, maxshipqty, abbr, sourcing, disc
                       ,maxleadtime, minleadtime, priority, enablesw
@@ -504,7 +510,8 @@ insert into sourcing ( item, dest, source, transmode, eff, factor, arrivcal
                       ,lotsizesenabledsw, convenientadjdownpct
                      )
 
-select distinct ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
+select distinct 'U_30_SRC_DAILY_PART3'
+      ,ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
       ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
       ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
       ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC' sourcing, v_init_eff_date disc
@@ -682,14 +689,18 @@ and src.item is null;
 
 commit;
 
---where LOC:U_RUNEW_CUST = 1 for GID find the closest MFG location (LOC_TYPE = 1) and assign as a single source for RUNEW.  
-
-insert into sourcing (item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
+/*******************************************************************************
+** Part 4: where LOC:U_RUNEW_CUST = 1 for GID find the closest 
+**         MFG location (LOC_TYPE = 1) and assign as a single source for RUNEW.
+*******************************************************************************/
+insert into intins_sourcing ( integration_jobid
+    ,item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
     maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
     ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
     roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
 
-select distinct u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
+select distinct 'U_30_SRC_DAILY_PART4'
+    ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
     ' ' abbr, 'ISS4MFG' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
     100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
     ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
@@ -748,14 +759,20 @@ and c.item is null;
 
 commit;
 
---where U_RUNEW_CUST = 1 and forecast exists for other non-RUNEW items then allow sourcing to LOC_TYPE = 1 where substitution logic can be used to satisfy demand with RUNEW proxy
-
-insert into sourcing (item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
+/*******************************************************************************
+** Part 5: where U_RUNEW_CUST = 1 and forecast exists for other 
+**         non-RUNEW items then allow sourcing to LOC_TYPE = 1 
+**         where substitution logic can be used to satisfy demand 
+**         with RUNEW proxy
+*******************************************************************************/
+insert into intins_sourcing ( integration_jobid
+   ,item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
     maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
     ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
     roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
 
-select distinct u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
+select distinct 'U_30_SRC_DAILY_PART5'
+   ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
     ' ' abbr, 'ISS5MFG' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
     100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
     ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
@@ -827,13 +844,15 @@ where u.rank = 1;
 
 commit;
 
---collections
-
---Find all possible sources within loc.u_max_dist & loc.u_max_srcs where udt_cost_transit matches source_pc and dest_pc or source_geo and dest_geo; 16k
-
+/*******************************************************************************
+** Part 6: collections
+**         Find all possible sources within loc.u_max_dist & loc.u_max_srcs 
+**         where udt_cost_transit matches source_pc and dest_pc or source_geo 
+**         and dest_geo; 16k
+*******************************************************************************/
 insert into igpmgr.intins_sourcing
-( 
-   item, dest, source, transmode, eff, factor, arrivcal, majorshipqty, minorshipqty
+( integration_jobid
+  ,item, dest, source, transmode, eff, factor, arrivcal, majorshipqty, minorshipqty
   ,enabledyndepsw,shrinkagefactor, maxshipqty, abbr, sourcing, disc, maxleadtime
   ,minleadtime, priority, enablesw, yieldfactor, supplyleadtime, costpercentage
   ,supplytransfercost, nonewsupplydate, shipcal, ff_trigger_control
@@ -842,7 +861,8 @@ insert into igpmgr.intins_sourcing
   ,roundingfactor, ordergroup, ordergroupmember, lotsizesenabledsw
   ,convenientadjdownpct
 )
-select distinct u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
+select distinct 'U_30_SRC_DAILY_PART6'
+   ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
     ' ' abbr, 'COLL0FIXED' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
     100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
     ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
@@ -960,12 +980,18 @@ commit;
 
 --if still unmatched use the zip code to default plant table
 
-insert into sourcing (item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
+/*******************************************************************************
+** Part 7: 
+*******************************************************************************/
+insert into igpmgr.intins_sourcing
+( integration_jobid
+    ,item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
     maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
     ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
-    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
-
-select distinct u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
+    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct
+)
+select distinct 'U_30_SRC_DAILY_PART7'
+   ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
     ' ' abbr, 'COLL3ZIPCODE' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
     100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
     ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
@@ -996,13 +1022,16 @@ from
 
 commit;
 
---TPM relocations (modified 06/19/2015)
-
-insert into sourcing (item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
+/*******************************************************************************
+** Part 8: TPM relocations (modified 06/19/2015)
+*******************************************************************************/
+insert into igpmgr.intins_sourcing
+( integration_jobid
+   ,item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
     maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
     ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
-    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
-    
+    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct
+)
 with 
 source_skus ( source,  postal_code, item, stocktype)
  as
@@ -1054,7 +1083,8 @@ ranked_lanes ( source, dest, item, max_src, rank)
  ,row_number() over (partition by lane.item, lane.dest order by lane.cost_pallet, lane.source asc) as rank
  from lanes lane
 )
-select distinct rl.item, rl.dest, rl.source, 'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal, 0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
+select distinct 'U_30_SRC_DAILY_PART8' 
+   ,rl.item, rl.dest, rl.source, 'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal, 0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
     ' ' abbr, 'TPM_RELOC' sourcing, v_init_eff_date disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
     100 costpercentage,     0 supplytransfercost,  v_init_eff_date nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
     ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
@@ -1111,6 +1141,9 @@ commit;
 --
 --commit;
 
+/*******************************************************************************
+** Part 9: Update Sourcing Min LeadTime
+*******************************************************************************/
 declare
   cursor cur_selected is
     select c.item, c.dest, c.source, c.sourcing, t.transittime,
@@ -1132,9 +1165,14 @@ begin
   commit;
 end;
 
-insert into sourcingdraw (sourcing, eff, item, dest, source, drawqty, qtyuom)
-
-select c.sourcing, to_date('01/01/1970', 'MM/DD/YYYY') eff, c.item, c.dest, c.source, 1 drawqty, 18 qtyuom 
+/*******************************************************************************
+** Part 10: Add Sourcing Draw Records
+*******************************************************************************/
+insert into igpmgr.intins_sourcingdraw 
+( integration_jobid, sourcing, eff, item, dest, source, drawqty, qtyuom)
+select 'U_30_SRC_DAILY_PART10'
+       ,c.sourcing, v_init_eff_date eff, c.item, c.dest, c.source
+       ,1 drawqty, 18 qtyuom 
 from sourcing c, sourcingdraw d
 where c.item = d.item(+)
 and c.dest = d.dest(+)
@@ -1144,9 +1182,14 @@ and d.item is null;
 
 commit;
 
-insert into sourcingyield (sourcing, eff, item, dest, source, yieldqty, qtyuom)
-
-select c.sourcing, to_date('01/01/1970', 'MM/DD/YYYY') eff, c.item, c.dest, c.source, 1 yieldqty, 18 qtyuom 
+/*******************************************************************************
+** Part 11: Add Sourcing Yield Records
+*******************************************************************************/
+insert into igpmgr.intins_sourcingyield 
+( integration_jobid, sourcing, eff, item, dest, source, yieldqty, qtyuom)
+select 'U_30_SRC_DAILY_PART11'
+       ,c.sourcing, v_init_eff_date eff, c.item, c.dest, c.source
+       ,1 yieldqty, 18 qtyuom 
 from sourcing c, sourcingyield d
 where c.item = d.item(+)
 and c.dest = d.dest(+)
@@ -1156,10 +1199,16 @@ and d.item is null;
 
 commit;
 
-insert into res (loc, type,     res,    cal,  cost,     descr,  avgskuchg,   avgfamilychg,  avgskuchgcost,  avgfamilychgcost,     levelloadsw,     
-    levelseqnum,  criticalitem, checkmaxcap,  unitpenalty,  adjfactor,  source,  enablesw,  subtype,   qtyuom,   currencyuom,     productionfamilychgoveropt)
-
-select distinct u.dest loc, 5 type,     u.res,     ' '  cal,     0 cost,     ' '  descr,     0 avgskuchg,     0 avgfamilychg,     0 avgskuchgcost,     0 avgfamilychgcost,     0 levelloadsw,     
+/*******************************************************************************
+** Part 12: Add Res Records
+*******************************************************************************/
+insert into igpmgr.intins_res 
+(integration_jobid, loc, type,     res,    cal,  cost,     descr,  avgskuchg
+  ,avgfamilychg,  avgskuchgcost,  avgfamilychgcost,     levelloadsw,     
+    levelseqnum,  criticalitem, checkmaxcap,  unitpenalty,  adjfactor,  source,  enablesw,  subtype,   qtyuom,   currencyuom,     productionfamilychgoveropt
+)
+select distinct 'U_30_SRC_DAILY_PART12'
+   ,u.dest loc, 5 type,     u.res,     ' '  cal,     0 cost,     ' '  descr,     0 avgskuchg,     0 avgfamilychg,     0 avgskuchgcost,     0 avgfamilychgcost,     0 levelloadsw,     
     1 levelseqnum,     ' '  criticalitem,     1 checkmaxcap,     0 unitpenalty,     1 adjfactor,  u.source,     1 enablesw,     6 subtype,     18 qtyuom,     11 currencyuom,     0 productionfamilychgoveropt
 from res r,
 
@@ -1171,9 +1220,15 @@ and r.res is null;
 
 commit;
 
-insert into sourcingrequirement (stepnum,     nextsteptiming,     rate,     leadtime,     offset,     enablesw,     sourcing,     eff,     res,     item,     dest,     source,     qtyuom)
+/*******************************************************************************
+** Part 13: Add SourcingRequirement Records
+*******************************************************************************/
+insert into igpmgr.intins_sourcingreq
+( integration_jobid, stepnum,     nextsteptiming,     rate,     leadtime,     offset,     enablesw,     sourcing,     eff,     res,     item,     dest,     source,     qtyuom
+)
 
-select 1 stepnum,     3 nextsteptiming,     1 rate,     0 leadtime,     0 offset,     1 enablesw,     u.sourcing,     to_date('01/01/1970', 'MM/DD/YYYY') eff,     u.res,     u.item,     u.dest,     u.source,     18 qtyuom
+select 'U_30_SRC_DAILY_PART13'
+       ,1 stepnum,     3 nextsteptiming,     1 rate,     0 leadtime,     0 offset,     1 enablesw,     u.sourcing,     to_date('01/01/1970', 'MM/DD/YYYY') eff,     u.res,     u.item,     u.dest,     u.source,     18 qtyuom
 from sourcingrequirement r, 
 
     (select c.item, c.dest, c.source, c.sourcing, c.source||'->'||c.dest res from sourcing c
@@ -1187,9 +1242,17 @@ and r.item is null;
 
 commit;
 
-insert into cost (cost,  enablesw,   cumulativesw,  groupedsw,  sharedsw,  qtyuom,  currencyuom,   accumcal,  maxqty,     maxutilization)
-
-select distinct 'LOCAL:RES:'||u.res||'-202' cost,     1 enablesw,     0 cumulativesw,     0 groupedsw,     0 sharedsw,     18 qtyuom,     11 currencyuom,    ' '   accumcal,     0 maxqty,     0 maxutilization
+/*******************************************************************************
+** Part 14: Add Cost Records
+*******************************************************************************/
+insert into igpmgr.intins_cost 
+( integration_jobid, cost,  enablesw,   cumulativesw,  groupedsw,  sharedsw
+  ,  qtyuom,  currencyuom,   accumcal,  maxqty,     maxutilization
+)
+select distinct 'U_30_SRC_DAILY_PART14'
+    ,'LOCAL:RES:'||u.res||'-202' cost,     1 enablesw,     0 cumulativesw
+    ,     0 groupedsw,     0 sharedsw,     18 qtyuom,     11 currencyuom
+    ,    ' '   accumcal,     0 maxqty,     0 maxutilization
 from cost c, 
 
     (select c.item, c.dest, c.source, c.sourcing, c.source||'->'||c.dest res, 'LOCAL:RES:'||c.source||'->'||c.dest||'-202' cost  from sourcing c
@@ -1200,13 +1263,13 @@ and c.cost is null;
 
 commit;
 
-/**********************************************************
-** Now insert costtier records for 5 digit lanes
-***********************************************************/
-
-insert into costtier (breakqty, category, value, eff, cost)
-
-    select distinct 0 breakqty
+/*******************************************************************************
+** Part 15: Now insert costtier records for 5 digit lanes 
+*******************************************************************************/
+insert into igpmgr.intins_costtier 
+(integration_jobid, breakqty, category, value, eff, cost)
+    select distinct 'U_30_SRC_DAILY_PART15'
+      ,0 breakqty
       ,303 category
       ,lane_5zip_costed.value
       ,v_init_eff_date eff
@@ -1250,12 +1313,16 @@ insert into costtier (breakqty, category, value, eff, cost)
 
 commit;
 
+
 /**********************************************************
-** Now insert costtier records for 3 digit lanes where the
-**  5 digit lanes were defaulted or have a higher cost
+** Part 16: Now insert costtier records for 3 digit lanes 
+**          where the 5 digit lanes were defaulted 
+**          or have a higher cost
 ***********************************************************/
-insert into intups_costtier (breakqty, category, value, eff, cost)
-select distinct 0 breakqty
+insert into intups_costtier 
+(integration_jobid, breakqty, category, value, eff, cost)
+select distinct 'U_30_SRC_DAILY_PART16'
+          ,0 breakqty
           ,303 category
           ,lane_3zip_costed.value
           ,v_init_eff_date eff
@@ -1290,12 +1357,12 @@ and lane_3zip_costed.cost = costtier.cost(+)
 and costtier.value >= 10;
 
 /**********************************************************
-** Now Populate teh ResCost table
+** Part 17: Now Populate teh ResCost table
 ***********************************************************/
-
-insert into rescost (category, res, localcost, tieredcost)
-
-select distinct 202 category, u.res, u.cost localcost, ' ' tieredcost
+insert into  intups_rescost 
+(integration_jobid, category, res, localcost, tieredcost)
+select distinct 'U_30_SRC_DAILY_PART17'
+      ,202 category, u.res, u.cost localcost, ' ' tieredcost
 from rescost r, costtier t, 
 
     (select distinct c.dest
@@ -1318,6 +1385,3 @@ and r.localcost is null;
 commit;
 
 end;
-
-/
-
