@@ -18,7 +18,7 @@ from item i,
  where maxcap > 0
    and yield > 0
 union
-select '4055AI' item from dual 
+select '4001AI' item from dual 
 ) y
 
 where y.item = i.item(+)
@@ -236,8 +236,7 @@ from
     (select f.item, f.loc, f.infcarryfwdsw
     from sku s, 
 
-        (select  distinct 
-            case when f.dmdunit = '4001AI' then '4055AI' else f.dmdunit end item, f.loc, 
+        (select  distinct f.dmdunit item, f.loc, 
             0 infcarryfwdsw
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
         from fcst f, loc l, item i, dfuview v
@@ -306,8 +305,7 @@ insert into dfutoskufcst (dmdunit, item, dmdgroup, dfuloc, skuloc, startdate, du
 select distinct f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate, f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
 
-    (select distinct f.dmdunit, 
-        case when f.dmdunit = '4001AI' then '4055AI' else f.dmdunit end item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
+    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v
     where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
     and f.dmdgroup in ('ISS', 'COL')
@@ -366,8 +364,7 @@ insert into dfutoskufcst (dmdunit, item, dmdgroup, dfuloc, skuloc, startdate, du
 select distinct f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate, f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
 
-    (select distinct f.dmdunit, 
-        case when f.dmdunit = '4001AI' then '4055AI' else f.dmdunit end item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
+    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v
     where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
     and f.dmdgroup in ('TPM')
