@@ -6,10 +6,15 @@ set define off;
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_10_SKU_BASE" as
 
 begin
-
-insert into item (item, descr, uom, defaultuom, u_materialcode, u_qualitybatch, u_stock)
-
-select y.item, ' ' descr, ' ' uom, 18 defaultuom, substr(y.item, 1, 5) u_materialcode, substr(y.item, 5, 55) u_qualitybatch, 
+/******************************************************************
+** Part 1: create Items                                           * 
+******************************************************************/
+insert into igpmgr.intins_item 
+(integration_jobid, item, descr, uom, defaultuom, u_materialcode
+    , u_qualitybatch, u_stock
+)
+select 'U_10_SKU_BASE_PART1' 
+    ,y.item, ' ' descr, ' ' uom, 18 defaultuom, substr(y.item, 1, 5) u_materialcode, substr(y.item, 5, 55) u_qualitybatch, 
     case when substr(y.item, -2) = 'AR' then 'B'
             when substr(y.item, -2) = 'AI' then 'A' else 'C' end u_stock
 from item i, 
@@ -26,15 +31,24 @@ and i.item is null;
 
 commit;
 
---SKU for service centers, TPM
 
-insert into sku (item, loc, oh,   replentype,   netchgsw,  ohpost,  planlevel,  sourcinggroup, qtyuom, currencyuom,  storablesw,     
-    enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw,  minohcovrule, targetohcovrule,  ltdgroup,     infinitesupplysw,     mpbatchnum,     seqintenablesw,     
-    itemstoregrade,     rpbatchnum)
-
-select u.item, u.loc, 0 oh,     5 replentype,     1 netchgsw,     to_date('01/01/1970', 'MM/DD/YYYY') ohpost,     -1 planlevel,     ' ' sourcinggroup,     18 qtyuom,    15 currencyuom,     1 storablesw,     
-    1 enablesw,     35 timeuom,    ''  ff_trigger_control,     0 infcarryfwdsw,     1 minohcovrule,     1 targetohcovrule,     ' ' ltdgroup,     0 infinitesupplysw,     0 mpbatchnum,     0 seqintenablesw,     
-    -1 itemstoregrade,     0 rpbatchnum
+/******************************************************************
+** Part 2: create SKU for service centers, TPM
+******************************************************************/
+insert into igpmgr.intins_sku 
+(integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw
+    ,minohcovrule, targetohcovrule, ltdgroup, infinitesupplysw
+    , mpbatchnum, seqintenablesw, itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART2'
+   ,u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+   ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom
+   ,1 storablesw, 1 enablesw, 35 timeuom, ''  ff_trigger_control
+   ,0 infcarryfwdsw, 1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup
+   ,0 infinitesupplysw, 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade
+   , 0 rpbatchnum
 from sku s, loc l, item i, 
 
     (select distinct item, loc
@@ -55,39 +69,25 @@ and s.item is null;
 
 commit;
 
---temporary step to create SKU for MFG locations
-
-insert into sku (item, loc, oh,   replentype,   netchgsw,  ohpost,  planlevel,  sourcinggroup, qtyuom, currencyuom,  storablesw,     
-    enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw,  minohcovrule, targetohcovrule,  ltdgroup,     infinitesupplysw,     mpbatchnum,     seqintenablesw,     
-    itemstoregrade,     rpbatchnum)
-
-/**************************************************************
+/******************************************************************
+** Part 3: temporary step to create SKU for MFG locationso
 ** 08282015 - added other skus at mfg so can create production 
 **            methods to convert to RUNEW 
-***************************************************************/
-select i.item
-  , l.loc
-  , 0 oh
-  , 5 replentype
-  , 1 netchgsw
-  , to_date('01/01/1970', 'MM/DD/YYYY') ohpost
-  , -1 planlevel
-  , ' ' sourcinggroup
-  , 18 qtyuom
-  , 15 currencyuom
-  , 1 storablesw
-  , 1 enablesw
-  , 35 timeuom
-  , '' ff_trigger_control
-  , 0 infcarryfwdsw
-  , 1 minohcovrule
-  , 1 targetohcovrule
-  , ' ' ltdgroup
-  , 0 infinitesupplysw
-  , 0 mpbatchnum
-  , 0 seqintenablesw
-  , -1 itemstoregrade
-  , 0 rpbatchnum
+******************************************************************/
+insert into igpmgr.intins_sku 
+(integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw, timeuom, ff_trigger_control, infcarryfwdsw
+    ,minohcovrule, targetohcovrule, ltdgroup, infinitesupplysw
+    ,mpbatchnum, seqintenablesw, itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART3'
+  ,i.item , l.loc , 0 oh , 5 replentype , 1 netchgsw , v_init_eff_date ohpost
+  ,-1 planlevel , ' ' sourcinggroup , 18 qtyuom , 15 currencyuom 
+  ,1 storablesw , 1 enablesw , 35 timeuom , '' ff_trigger_control 
+  ,0 infcarryfwdsw , 1 minohcovrule , 1 targetohcovrule , ' ' ltdgroup 
+  ,0 infinitesupplysw , 0 mpbatchnum , 0 seqintenablesw , -1 itemstoregrade 
+  ,0 rpbatchnum
 from loc l
   , item i
 where i.item in ( '4055RUNEW' 
@@ -183,19 +183,25 @@ commit;
 --    
 --commit;
 
-/*
-SKU for AI at service centers; if an RU exists at SC then an AI should as well  
-RU could be created at service from udt_yield or dfuview def_plant
-AR SKU should be created if percenrepair > 0 
-*/  
-
-insert into sku (item, loc, oh,   replentype,   netchgsw,  ohpost,  planlevel,  sourcinggroup, qtyuom, currencyuom,  storablesw,     
-    enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw,  minohcovrule, targetohcovrule,  ltdgroup,     infinitesupplysw,     mpbatchnum,     seqintenablesw,     
-    itemstoregrade,     rpbatchnum)
-
-select u.item, u.loc, 0 oh,     5 replentype,     1 netchgsw,     to_date('01/01/1970', 'MM/DD/YYYY') ohpost,     -1 planlevel,     ' ' sourcinggroup,     18 qtyuom,    15 currencyuom,     1 storablesw,     
-    1 enablesw,     35 timeuom,    ''  ff_trigger_control,     0 infcarryfwdsw,     1 minohcovrule,     1 targetohcovrule,     ' ' ltdgroup,     0 infinitesupplysw,     0 mpbatchnum,     0 seqintenablesw,     
-    -1 itemstoregrade,     0 rpbatchnum
+/******************************************************************
+** Part 4: SKU for AI at service centers; if an RU exists at SC 
+**         then an AI should as well RU could be created at service 
+**         from udt_yield or dfuview def_plant AR SKU should be 
+**         created if percenrepair > 0 
+******************************************************************/
+insert into igpmgr.intins_sku 
+(integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw, timeuom, ff_trigger_control, infcarryfwdsw, minohcovrule
+    ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum
+    ,seqintenablesw, itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART4'
+   ,u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+   ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
+   ,1 enablesw, 35 timeuom, ''  ff_trigger_control, 0 infcarryfwdsw
+   ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
+   , 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
 from sku s, loc l, item i, 
 
     (select distinct matcode||'AI' item, loc 
@@ -221,16 +227,23 @@ and s.item is null;
 
 commit;
 
-
-/* loc_type 3 SKU for NA ==> Infinit Carry Switch to 0 for WEEEKLY VERSION */
-
-insert into sku (item, loc, oh,   replentype,   netchgsw,  ohpost,  planlevel,  sourcinggroup, qtyuom, currencyuom,  storablesw,     
-    enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw,  minohcovrule, targetohcovrule,  ltdgroup,     infinitesupplysw,     mpbatchnum,     seqintenablesw,     
-    itemstoregrade,     rpbatchnum)
-
-select u.item, u.loc, 0 oh,     5 replentype,     1 netchgsw,     to_date('01/01/1970', 'MM/DD/YYYY') ohpost,     -1 planlevel,     ' ' sourcinggroup,     18 qtyuom,    15 currencyuom,    1 storablesw,     
-    1 enablesw,     35 timeuom,    ''  ff_trigger_control,     u.infcarryfwdsw,     1 minohcovrule,     1 targetohcovrule,     ' ' ltdgroup,     0 infinitesupplysw,     0 mpbatchnum,     0 seqintenablesw,     
-    -1 itemstoregrade,     0 rpbatchnum
+/******************************************************************
+** Part 5: loc_type 3 SKU for NA ==> Infinit Carry Switch to 0 
+**         for WEEEKLY VERSION
+******************************************************************/
+insert into igpmgr.intins_sku 
+( integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw, timeuom, ff_trigger_control, infcarryfwdsw, minohcovrule
+    ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum, seqintenablesw
+    ,itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART5'
+    , u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+    ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
+    ,1 enablesw, 35 timeuom, ''  ff_trigger_control, u.infcarryfwdsw
+    ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
+    ,0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
 from 
 
     (select f.item, f.loc, f.infcarryfwdsw
@@ -297,12 +310,18 @@ commit;
 
 --rather than running transfer forecast could use below insert statement....
 
+/******************************************************************
+** Part 6: truncate and re-create dfutoskufcst 
+******************************************************************/
 execute immediate 'truncate table dfutoskufcst';
 
-
-insert into dfutoskufcst (dmdunit, item, dmdgroup, dfuloc, skuloc, startdate, dur, type, supersedesw, ff_trigger_control, totfcst)
-
-select distinct f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate, f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
+insert into igpmgr.intins_dfutoskufcst 
+( integration_jobid, dmdunit, item, dmdgroup, dfuloc, skuloc
+    ,startdate, dur, type, supersedesw, ff_trigger_control, totfcst
+)
+select distinct 'U_10_SKU_BASE_PART6'
+        ,f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate
+        ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
@@ -327,11 +346,19 @@ and l.u_area = 'NA';
 
 commit;
 
---create forecast records for RUNEW only where permitted, LOC:U_RUNEW_CUST = 1 
 
-insert into dfutoskufcst (dmdunit, item, dmdgroup, dfuloc, skuloc, startdate, dur, type, supersedesw, ff_trigger_control, totfcst)
+/******************************************************************
+** Part 7: create forecast records for RUNEW only where permitted
+**         ,LOC:U_RUNEW_CUST = 1 truncate and re-create dfutoskufcst 
+******************************************************************/
+insert into igpmgr.intins_dfutoskufcst 
+( integration_jobid, dmdunit, item, dmdgroup, dfuloc, skuloc, startdate
+    ,dur, type , supersedesw, ff_trigger_control, totfcst
+)
  
-select distinct f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate, f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
+select distinct 'U_10_SKU_BASE_PART7'
+    ,f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate
+    ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i,  
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
@@ -357,14 +384,23 @@ and i.u_stock in ('C');
 
 commit;
 
--- create forecast records at LOC_TYPE 2 locations for supply of TPM; A, B and C stock are all supply (CAT10 SKU constraints)
-
-insert into dfutoskufcst (dmdunit, item, dmdgroup, dfuloc, skuloc, startdate, dur, type, supersedesw, ff_trigger_control, totfcst)
-
-select distinct f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate, f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
+/******************************************************************
+** Part 8: create forecast records at LOC_TYPE 2 locations for 
+**         supply of TPM; A, B and C stock are all supply 
+**        (CAT10 SKU constraints) 
+******************************************************************/
+insert into igpmgr.intins_dfutoskufcst 
+( integration_jobid, dmdunit, item, dmdgroup, dfuloc, skuloc
+    ,startdate, dur, type, supersedesw, ff_trigger_control, totfcst
+)
+select distinct 'U_10_SKU_BASE_PART8'
+    ,f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate
+    ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
 
-    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
+    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc
+              ,f.loc skuloc , startdate, dur, 1 type, 0 supersedesw
+              ,''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v
     where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
     and f.dmdgroup in ('TPM')
@@ -386,10 +422,17 @@ and l.u_area = 'NA';
 
 commit;
 
+/******************************************************************
+** Part 9: Create Cal Records
+******************************************************************/
+insert into igpmgr.intins_cal 
+( 
+   integration_jobid, cal, descr, type, master, numfcstper, rollingsw
+)
 
-insert into cal 
-
-select s.loc||'_'||s.item cal, 'Allocation Calendar' descr, 7 type, ' ' master, 0 numfcstper, 0 rollingsw 
+select 'U_10_SKU_BASE_PART9'
+        ,s.loc||'_'||s.item cal, 'Allocation Calendar' descr
+        ,7 type, ' ' master, 0 numfcstper, 0 rollingsw 
 from sku s,
 
     (select cal, substr(cal, 1, instr(cal, '_')-1) loc, substr(cal, instr(cal, '_')+1, 55) item
@@ -404,9 +447,17 @@ and c.item is null;
 
 commit;
 
-insert into caldata
-
-select c.cal, ' ' altcal, 23319360 eff, 6 opt, 0 repeat, 0 avail, 'Allocation Calendar' descr, 0 perwgt, 1/7 allocwgt, 0 covdur 
+/******************************************************************
+** Part 10: Create Caldata Records
+******************************************************************/
+insert into igpmgr.intins_caldata
+(
+  integration_jobid, cal, altcal, eff, opt, repeat, avail, descr
+   ,perwgt, allocwgt, covdur
+)
+select 'U_10_SKU_BASE_PART10'
+       ,c.cal, ' ' altcal, 23319360 eff, 6 opt, 0 repeat, 0 avail
+       ,'Allocation Calendar' descr, 0 perwgt, 1/7 allocwgt, 0 covdur 
 from cal c, caldata cd, sku s
 where substr(c.cal, 1, instr(c.cal, '_')-1) = s.loc
 and substr(c.cal, instr(c.cal, '_')+1, 55) = s.item
@@ -416,21 +467,28 @@ and cd.cal is null;
 
 commit;
 
-/*
-SKU demand paramters are created initially here but are maintained afterwards through FE page.  SKU typically are not deleted like sourcing but if they are and need to be re-created then previous
-demand parameter settigns will be lost.  A UDT may later be considered.
-*/
-
-insert into skudemandparam (item, loc, custorderdur,  dmdtodate,  fcstadjrule,  maxcustordersysdur,  proratesw,  prorationdur,   dmdredid,  ccpsw,  custorderpriority,  fcstmeetearlydur,   fcstpriority,     
-    fcstmeetlatedur,     alloccal,   inddmdunitcost,   inddmdunitmargin,  unitcarcost,  ff_trigger_control, fcstconsumptionrule,  fcstprimconsdur, fcstsecconsdur,     
-    proratebytypesw,  alloccalgroup,   mastercal,  weeklyavghist)
-
-select s.item, s.loc, 
-    case when l.loc_type = 3 then 1440*1 else 1440*365 end custorderdur,     0 dmdtodate,     
-    case when l.loc_type = 3 then 6 else 2 end fcstadjrule,     
-    case when l.loc_type = 3 then 1440*13 else 0 end maxcustordersysdur,     0 proratesw,     0 prorationdur,     ' ' dmdredid,     0 ccpsw,     -1 custorderpriority,     0 fcstmeetearlydur,     -1 fcstpriority,     
-    0 fcstmeetlatedur,      s.loc||'_'||s.item alloccal,     0 inddmdunitcost,     0 inddmdunitmargin,     0 unitcarcost,    ''  ff_trigger_control,     0 fcstconsumptionrule,     0 fcstprimconsdur,     0 fcstsecconsdur,     
-    0 proratebytypesw,     ' ' alloccalgroup,     ' ' mastercal,     0 weeklyavghist
+/******************************************************************
+** Part 11: Create the SKU demand paramters 
+******************************************************************/
+insert into igpmgr.intins_skudemandparam 
+( 
+   integration_jobid, item, loc, custorderdur, dmdtodate, fcstadjrule
+     ,maxcustordersysdur, proratesw, prorationdur, dmdredid, ccpsw
+     ,custorderpriority, fcstmeetearlydur, fcstpriority, fcstmeetlatedur
+     ,alloccal, inddmdunitcost, inddmdunitmargin, unitcarcost
+     ,ff_trigger_control, fcstconsumptionrule, fcstprimconsdur
+     ,fcstsecconsdur, proratebytypesw, alloccalgroup, mastercal, weeklyavghist
+)
+select 'U_10_SKU_BASE_PART11'
+       ,s.item, s.loc, 
+    case when l.loc_type = 3 then 1440*1 else 1440*365 end custorderdur, 0 dmdtodate,     
+    case when l.loc_type = 3 then 6 else 2 end fcstadjrule, 
+    case when l.loc_type = 3 then 1440*13 else 0 end maxcustordersysdur, 0 proratesw
+      ,0 prorationdur, ' ' dmdredid, 0 ccpsw, -1 custorderpriority, 0 fcstmeetearlydur
+      ,-1 fcstpriority , 0 fcstmeetlatedur, s.loc||'_'||s.item alloccal
+      ,0 inddmdunitcost, 0 inddmdunitmargin, 0 unitcarcost, ''  ff_trigger_control
+      ,0 fcstconsumptionrule, 0 fcstprimconsdur, 0 fcstsecconsdur
+      ,0 proratebytypesw, ' ' alloccalgroup, ' ' mastercal, 0 weeklyavghist
 from skudemandparam p, sku s, loc l
 where s.enablesw = 1
 and s.loc = l.loc
@@ -439,16 +497,29 @@ and s.loc = p.loc(+)
 and p.item is null;
 
 commit;
-
-insert into skudeploymentparam (item, loc, allocstratid,   constrrecshipsw,   locpriority,   minallocdur,  pushopt,  recshippushopt,  recshipsupplyrule,  rsallocrule,  stockavaildur,   dyndepldur,     
-    incstkoutcost,  initstkoutcost,  shortagessfactor,   surplusrestockcost,  surplusssfactor,  shortagedur,  unitstocklowcost,  unitstockoutcost,  enablesubsw,     
-    meetprisssw,    usesubstsssw,  recshipcal,  ff_trigger_control,  deploydetaillevel,   holdbackqty,  maxbucketdur,  skupriority, secrsallocrule,     
-    recshipdur,   sourcessrule)
-
-select s.item, s.loc, ' ' allocstratid,     0 constrrecshipsw,     1 locpriority,     0 minallocdur,     0 pushopt,     1 recshippushopt,     1 recshipsupplyrule,     1 rsallocrule,     0 stockavaildur,     0 dyndepldur,     
-    0 incstkoutcost,     0 initstkoutcost,     1 shortagessfactor,     0 surplusrestockcost,     0 surplusssfactor,     0 shortagedur,     0 unitstocklowcost,     0 unitstockoutcost,     0 enablesubsw,     
-    0 meetprisssw,     0 usesubstsssw, ' ' recshipcal,    ''  ff_trigger_control,     1 deploydetaillevel,     0 holdbackqty,     0 maxbucketdur,     0 skupriority,     1 secrsallocrule,     
-    0 recshipdur,     3 sourcessrule
+/******************************************************************
+** Part 12: SKU deployment paramters
+******************************************************************/
+insert into igpmgr.intins_skudeployparam 
+(
+  integration_jobid, item, loc, allocstratid, constrrecshipsw
+  ,locpriority, minallocdur, pushopt, recshippushopt, recshipsupplyrule
+  ,rsallocrule, stockavaildur, dyndepldur, incstkoutcost, initstkoutcost
+  ,shortagessfactor, surplusrestockcost, surplusssfactor, shortagedur
+  ,unitstocklowcost, unitstockoutcost, enablesubsw, meetprisssw
+  ,usesubstsssw, recshipcal, ff_trigger_control, deploydetaillevel
+  ,holdbackqty, maxbucketdur, skupriority, secrsallocrule
+  ,recshipdur, sourcessrule
+)
+select 'U_10_SKU_BASE_PART12'
+       ,s.item, s.loc, ' ' allocstratid, 0 constrrecshipsw, 1 locpriority
+       ,0 minallocdur, 0 pushopt, 1 recshippushopt, 1 recshipsupplyrule
+       ,1 rsallocrule, 0 stockavaildur, 0 dyndepldur, 0 incstkoutcost
+       ,0 initstkoutcost, 1 shortagessfactor, 0 surplusrestockcost
+       ,0 surplusssfactor, 0 shortagedur, 0 unitstocklowcost
+       ,0 unitstockoutcost, 0 enablesubsw, 0 meetprisssw, 0 usesubstsssw
+       ,' ' recshipcal, ''  ff_trigger_control, 1 deploydetaillevel, 0 holdbackqty
+       ,0 maxbucketdur, 0 skupriority, 1 secrsallocrule, 0 recshipdur, 3 sourcessrule
 from skudeploymentparam p, sku s
 where s.enablesw = 1
 and s.item = p.item(+)
@@ -456,28 +527,53 @@ and s.loc = p.loc(+)
 and p.item is null;
 
 commit;
+/******************************************************************
+** Part 13: SKU planning Param
+******************************************************************/
+insert into igpmgr.intins_skuplannparam 
+(
+    integration_jobid, item, loc, atpdur, depdmdopt, externalskusw
+    ,firstreplendate, lastfrzstart, lastplanstart, plandur, planleadtime
+    ,planleadtimerule, planshipfrzdur, restrictdur, allocbatchsw
+    ,cmpfirmdur, custservicelevel, maxchangefactor, mfgleadtime
+    ,recschedrcptsdur, cpppriority, cpplocksw, criticalmaterialsw
+    ,aggexcesssupplyrule, aggundersupplyrule, bufferleadtime, maxoh
+    ,maxcovdur, drpcovdur, drpfrzdur, drprule, drptimefencedate
+    ,drptimefencedur, incdrpqty, mindrpqty, mpscovdur, mfgfrzdur
+    ,mpsrule, mpstimefencedate, mpstimefencedur, incmpsqty, minmpsqty
+    ,shrinkagefactor, expdate, atprule, prodcal, prodstartdate
+    ,prodstopdate, orderingcost, holdingcost, eoq, ff_trigger_control
+    ,workingcal, lookaheaddur, orderpointrule, orderskudetailsw
+    ,supsdmindmdcovdur,  orderpointminrule, orderpointminqty
+    ,orderpointmindur, orderuptolevelmaxrule, orderuptolevelmaxqty
+    ,orderuptolevelmaxdur, aggskurule, fwdbuymaxdur, costuom
+    ,cumleadtimedur, cumleadtimeadjdur, cumleadtimerule, roundingfactor
+    ,limitplanarrivpublishsw, limitplanarrivpublishdur, maxohrule
+)
 
-insert into skuplanningparam (item, loc, atpdur, depdmdopt, externalskusw,  firstreplendate, lastfrzstart,     
-     lastplanstart,  plandur, planleadtime, planleadtimerule, planshipfrzdur, restrictdur, allocbatchsw, cmpfirmdur,     
-     custservicelevel, maxchangefactor,  mfgleadtime,  recschedrcptsdur,  cpppriority, cpplocksw, criticalmaterialsw, aggexcesssupplyrule,  aggundersupplyrule,     
-     bufferleadtime,   maxoh,  maxcovdur,  drpcovdur,  drpfrzdur,  drprule, drptimefencedate,     
-     drptimefencedur,  incdrpqty, mindrpqty, mpscovdur, mfgfrzdur, mpsrule, mpstimefencedate,mpstimefencedur,     
-     incmpsqty,  minmpsqty,  shrinkagefactor,  expdate, atprule,  prodcal,  prodstartdate,     
-     prodstopdate,   orderingcost, holdingcost,  eoq,  ff_trigger_control,  workingcal, lookaheaddur, orderpointrule,     
-     orderskudetailsw,  supsdmindmdcovdur,  orderpointminrule, orderpointminqty, orderpointmindur,  orderuptolevelmaxrule,  orderuptolevelmaxqty,     
-     orderuptolevelmaxdur,   aggskurule,  fwdbuymaxdur, costuom,  cumleadtimedur,   cumleadtimeadjdur,  cumleadtimerule,  roundingfactor,     
-     limitplanarrivpublishsw,  limitplanarrivpublishdur,     maxohrule)
-
-select s.item, s.loc, 0 atpdur,     3 depdmdopt,     0 externalskusw,     TO_DATE('01/01/1970','MM/DD/YYYY') firstreplendate,     TO_DATE('01/01/1970','MM/DD/YYYY') lastfrzstart,     
-    TO_DATE('01/01/1970','MM/DD/YYYY') lastplanstart,     524160 plandur,     0 planleadtime,     2 planleadtimerule,     0 planshipfrzdur,     0 restrictdur,     0 allocbatchsw,     0 cmpfirmdur,     
-     0.9 custservicelevel,     1 maxchangefactor,     0 mfgleadtime,     0 recschedrcptsdur,     1 cpppriority,     0 cpplocksw,     1 criticalmaterialsw,     2 aggexcesssupplyrule,     1 aggundersupplyrule,     
-     0 bufferleadtime,     999999999 maxoh,     1048320 maxcovdur,     10080 drpcovdur,     0 drpfrzdur,     1 drprule,     TO_DATE('01/01/1970','MM/DD/YYYY') drptimefencedate,     
-     0 drptimefencedur,     1 incdrpqty,     0 mindrpqty,     10080 mpscovdur,     0 mfgfrzdur,     1 mpsrule,     TO_DATE('01/01/1970','MM/DD/YYYY') mpstimefencedate,     0 mpstimefencedur,     
-     1 incmpsqty,     0 minmpsqty,     0 shrinkagefactor,     TO_DATE('01/01/1970','MM/DD/YYYY') expdate,     1 atprule,     ' ' prodcal,     TO_DATE('01/01/1970','MM/DD/YYYY') prodstartdate,     
-     TO_DATE('01/01/1970','MM/DD/YYYY') prodstopdate,     1 orderingcost,     1 holdingcost,     1 eoq,    ''  ff_trigger_control,     ' ' workingcal,     0 lookaheaddur,     2 orderpointrule,     
-     0 orderskudetailsw,     1048320 supsdmindmdcovdur,     1 orderpointminrule,     0 orderpointminqty,     0 orderpointmindur,     1 orderuptolevelmaxrule,     0 orderuptolevelmaxqty,     
-     0 orderuptolevelmaxdur,     0 aggskurule,     0 fwdbuymaxdur,     0 costuom,     0 cumleadtimedur,     0 cumleadtimeadjdur,     1 cumleadtimerule,     0 roundingfactor,     
-     0 limitplanarrivpublishsw,     0 limitplanarrivpublishdur,     1 maxohrule
+select 'U_10_SKU_BASE_PART13'
+    ,s.item, s.loc, 0 atpdur, 3 depdmdopt, 0 externalskusw
+    ,v_init_eff_date firstreplendate, v_init_eff_date lastfrzstart
+    ,v_init_eff_date lastplanstart, 524160 plandur, 0 planleadtime
+    ,2 planleadtimerule, 0 planshipfrzdur, 0 restrictdur, 0 allocbatchsw
+    ,0 cmpfirmdur, 0.9 custservicelevel, 1 maxchangefactor, 0 mfgleadtime
+    ,0 recschedrcptsdur, 1 cpppriority, 0 cpplocksw, 1 criticalmaterialsw
+    ,2 aggexcesssupplyrule, 1 aggundersupplyrule, 0 bufferleadtime
+    ,999999999 maxoh, 1048320 maxcovdur, 10080 drpcovdur, 0 drpfrzdur
+    ,1 drprule, v_init_eff_date drptimefencedate, 0 drptimefencedur
+    ,1 incdrpqty, 0 mindrpqty, 10080 mpscovdur, 0 mfgfrzdur, 1 mpsrule
+    ,v_init_eff_date mpstimefencedate, 0 mpstimefencedur, 1 incmpsqty
+    ,0 minmpsqty, 0 shrinkagefactor, v_init_eff_date expdate, 1 atprule
+    ,' ' prodcal, TO_DATE('01/01/1970', 'MM/DD/YYYY') prodstartdate
+    ,v_init_eff_date prodstopdate, 1 orderingcost, 1 holdingcost
+    ,1 eoq, ''  ff_trigger_control, ' ' workingcal, 0 lookaheaddur
+    ,2 orderpointrule, 0 orderskudetailsw, 1048320 supsdmindmdcovdur
+    ,1 orderpointminrule, 0 orderpointminqty, 0 orderpointmindur
+    ,1 orderuptolevelmaxrule, 0 orderuptolevelmaxqty
+    ,0 orderuptolevelmaxdur, 0 aggskurule, 0 fwdbuymaxdur, 0 costuom
+    ,0 cumleadtimedur, 0 cumleadtimeadjdur, 1 cumleadtimerule
+    ,0 roundingfactor, 0 limitplanarrivpublishsw
+    ,0 limitplanarrivpublishdur, 1 maxohrule
 from skuplanningparam p, sku s
 where s.enablesw = 1
 and s.item = p.item(+)
@@ -485,20 +581,41 @@ and s.loc = p.loc(+)
 and p.item is null;
 
 commit;
+/******************************************************************
+** Part 14: SKU safteystock parameters
+******************************************************************/
 
-insert into skusafetystockparam (item, loc, avgleadtime,     avgnumlines,     leadtimesd,     maxss,     minss,     mfgleadtimerule,     mselag,     mseper,     netfcstmsesmconst,     
-    numreplenyr,     statssadjopt,     sscov,     ssrule,     statsscsl,     ssmeetearlydur,     sspriority,     tohrule, sstemplate,     dmddisttype,     
-    cslmetric,     calcstatssrule,     avgdmdcal,     avgdmdlookbwddur,     avgdmdlookfwddur,     calcmserule,     dmdcal,     dmdpostdate,     fcstdur,     ff_trigger_control,     
-    statsscovlimitdur,     supersedesssw,     msemaskopt,     msemaskminval,     msemaskmaxval,     dmdcorrelationfactor,     accumdur,     mseabstolerancelimit,     dmdalloccal,   
-    sspresentationopt,     maxsscovskipdur,     maxssfactor,     msemodelopt,     sscovusebaseonlysw,     arrivalpostdate,     shipdatadur,     shiplag,     orderlag,     orderpostdate,     
-    orderdatadur,     allowearlyarrivsw,     allowearlyordersw,     csltemplate)
-
-select s.item, s.loc, 0 avgleadtime,     0 avgnumlines,     0 leadtimesd,     999999999 maxss,     0 minss,     1 mfgleadtimerule,     0 mselag,     0 mseper,     0 netfcstmsesmconst   ,     
-    12 numreplenyr,     1 statssadjopt,     0 sscov,     1 ssrule,     0 statsscsl,     0 ssmeetearlydur,     -1 sspriority,     3 tohrule,     ' ' sstemplate,     1 dmddisttype ,     
-    2 cslmetric,     1 calcstatssrule,     ' ' avgdmdcal,     0 avgdmdlookbwddur,     525600 avgdmdlookfwddur,     1 calcmserule,     ' ' dmdcal,     TO_DATE('01/01/1970','MM/DD/YYYY') dmdpostdate, 10080 fcstdur,    ''  ff_trigger_control,     
-    0 statsscovlimitdur,     1 supersedesssw,     0 msemaskopt,     0 msemaskminval,     100 msemaskmaxval,     1 dmdcorrelationfactor,     1440 accumdur,     0 mseabstolerancelimit,     ' ' dmdalloccal,     
-    1 sspresentationopt,     0 maxsscovskipdur,     0 maxssfactor,     1 msemodelopt,     0 sscovusebaseonlysw, TO_DATE('01/01/1970','MM/DD/YYYY') arrivalpostdate,     0 shipdatadur,     0 shiplag,     0 orderlag,     TO_DATE('01/01/1970','MM/DD/YYYY') orderpostdate,     
-    0 orderdatadur,     1 allowearlyarrivsw,     1 allowearlyordersw, '' csltemplate
+insert into igpmgr.intins_skussparam 
+(
+    integration_jobid, item, loc, avgleadtime, avgnumlines, leadtimesd
+    ,maxss, minss, mfgleadtimerule, mselag, mseper, netfcstmsesmconst
+    ,numreplenyr, statssadjopt, sscov, ssrule, statsscsl, ssmeetearlydur
+    ,sspriority, tohrule, sstemplate, dmddisttype, cslmetric
+    ,calcstatssrule, avgdmdcal, avgdmdlookbwddur, avgdmdlookfwddur
+    ,calcmserule, dmdcal, dmdpostdate, fcstdur, ff_trigger_control
+    ,statsscovlimitdur, supersedesssw, msemaskopt, msemaskminval
+    ,msemaskmaxval, dmdcorrelationfactor, accumdur, mseabstolerancelimit
+    ,dmdalloccal, sspresentationopt, maxsscovskipdur, maxssfactor
+    ,msemodelopt, sscovusebaseonlysw, arrivalpostdate, shipdatadur
+    ,shiplag, orderlag, orderpostdate, orderdatadur, allowearlyarrivsw
+    ,allowearlyordersw, csltemplate
+)
+select 'U_10_SKU_BASE_PART14'
+    ,s.item, s.loc, 0 avgleadtime, 0 avgnumlines, 0 leadtimesd
+    ,999999999 maxss, 0 minss, 1 mfgleadtimerule, 0 mselag, 0 mseper
+    ,0 netfcstmsesmconst, 12 numreplenyr, 1 statssadjopt, 0 sscov
+    ,1 ssrule, 0 statsscsl, 0 ssmeetearlydur, -1 sspriority, 3 tohrule
+    ,' ' sstemplate, 1 dmddisttype, 2 cslmetric, 1 calcstatssrule
+    ,' ' avgdmdcal, 0 avgdmdlookbwddur, 525600 avgdmdlookfwddur
+    ,1 calcmserule, ' ' dmdcal, v_init_eff_date dmdpostdate
+    ,10080 fcstdur, ''  ff_trigger_control, 0 statsscovlimitdur
+    ,1 supersedesssw, 0 msemaskopt, 0 msemaskminval, 100 msemaskmaxval
+    ,1 dmdcorrelationfactor, 1440 accumdur, 0 mseabstolerancelimit
+    ,' ' dmdalloccal, 1 sspresentationopt, 0 maxsscovskipdur
+    ,0 maxssfactor, 1 msemodelopt, 0 sscovusebaseonlysw
+    ,v_init_eff_date arrivalpostdate, 0 shipdatadur, 0 shiplag
+    ,0 orderlag, v_init_eff_date orderpostdate, 0 orderdatadur
+    ,1 allowearlyarrivsw, 1 allowearlyordersw, '' csltemplate
 from skusafetystockparam p, sku s
 where s.enablesw = 1
 and s.item = p.item(+)
@@ -507,6 +624,9 @@ and p.item is null;
 
 commit;
 
+/******************************************************************
+** Part 15: Update OnHand Post
+******************************************************************/
 update sku set ohpost = (select min(startdate) from dfutoskufcst);
 
 commit;
