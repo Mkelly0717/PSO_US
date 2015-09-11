@@ -1,7 +1,4 @@
 --------------------------------------------------------
---  File created - Friday-September-04-2015   
---------------------------------------------------------
---------------------------------------------------------
 --  DDL for Table UDT_FIXED_COLL
 --------------------------------------------------------
 
@@ -16,31 +13,3 @@
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
   BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
   TABLESPACE "SCPODATA" ;
---------------------------------------------------------
---  DDL for Index UDT_FIXED_COLL_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "SCPOMGR"."UDT_FIXED_COLL_PK" ON "SCPOMGR"."UDT_FIXED_COLL" ("LOC", "PLANT") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
-  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
-  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA" ;
---------------------------------------------------------
---  Constraints for Table UDT_FIXED_COLL
---------------------------------------------------------
-
-  ALTER TABLE "SCPOMGR"."UDT_FIXED_COLL" MODIFY ("LOC" NOT NULL ENABLE);
-  ALTER TABLE "SCPOMGR"."UDT_FIXED_COLL" ADD CONSTRAINT "UDT_FIXED_COLL_PK" PRIMARY KEY ("LOC", "PLANT")
-  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
-  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
-  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA"  ENABLE;
-  ALTER TABLE "SCPOMGR"."UDT_FIXED_COLL" MODIFY ("PLANT" NOT NULL ENABLE);
---------------------------------------------------------
---  Ref Constraints for Table UDT_FIXED_COLL
---------------------------------------------------------
-
-  ALTER TABLE "SCPOMGR"."UDT_FIXED_COLL" ADD CONSTRAINT "UDT_FIXED_COLL_LOC_FK1" FOREIGN KEY ("LOC")
-	  REFERENCES "SCPOMGR"."LOC" ("LOC") ENABLE;
