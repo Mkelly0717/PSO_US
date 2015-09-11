@@ -4,7 +4,6 @@
 set define off;
 
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_10_SKU_BASE" as
-
 begin
 /******************************************************************
 ** Part 1: create Items                                           * 
