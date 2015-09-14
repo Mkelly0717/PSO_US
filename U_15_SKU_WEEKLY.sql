@@ -7,15 +7,19 @@ set define off;
 
 begin
 
+
+/******************************************************************
+** Part 1: category 1 totdmd; dfutoskufcst has already been 
+**         filtered by startdate, u_area, dmdgroup, etc.
+******************************************************************/
 execute immediate 'truncate table skuconstraint';
 
 commit;
+insert into igpmgr.intins_skuconstraint 
+ ( integration_jobid, item, loc, eff, dur, category, policy, qtyuom, qty )
 
---category 1 totdmd; dfutoskufcst has already been filtered by startdate, u_area, dmdgroup, etc.
-
-insert into skuconstraint (item, loc, eff, dur, category, policy, qtyuom, qty)
-
-(select item, loc, eff, 1440*7 dur, category, 1 policy, 18 qtyuom, qty
+(select 'U_15_SKU_WEEKLY_PART1'
+       ,item, loc, eff, 1440*7 dur, category, 1 policy, 18 qtyuom, qty
     from 
             
     (select item, skuloc loc, category, startdate eff, fcst qty
@@ -52,15 +56,18 @@ insert into skuconstraint (item, loc, eff, dur, category, policy, qtyuom, qty)
 
 );
             
-commit;
-
---assign unmet demand penalty for forecast  
-
+/******************************************************************
+** Part 2: assign unmet demand penalty for forecast  
+******************************************************************/
 execute immediate 'truncate table skupenalty';
 
-insert into skupenalty (eff, rate, category, item, loc, currencyuom, qtyuom)
+commit;
 
-select to_date('01/01/1970', 'MM/DD/YYYY') eff, 190 rate,   101 category, u.item, u.loc, 15 currencyuom, 18 qtyuom
+insert into igpmgr.intins_skupenalty 
+( integration_jobid, eff, rate, category, item, loc, currencyuom, qtyuom )
+
+select 'U_15_SKU_WEEKLY_PART2'
+       ,v_init_eff_date eff, 190 rate,   101 category, u.item, u.loc, 15 currencyuom, 18 qtyuom
 from 
 
     (select distinct item, loc, category from skuconstraint where category in ( 1) 
@@ -85,17 +92,22 @@ commit;
 --
 --commit;
 
---create resource constraints for INS and REP in weekly periods  
+  
 
+/******************************************************************
+** Part 3: assign maximum capacity constraint  
+**         create resource constraints for INS and REP 
+**         in weekly periods
+******************************************************************/
 delete resconstraint;  --notice this deletes VL/VLL constraints as well since they are not needed in weekly and rebalancing models -- where substr(res, 1, 6) in ('INSCAP', 'REPCAP');
 
 commit;
 
--- assign maximum capacity constraint  
+insert into igpmgr.intins_resconstraint 
+( integration_jobid, eff, policy, qty, dur, category, res, qtyuom, timeuom )
 
-insert into resconstraint (eff, policy, qty, dur, category, res, qtyuom, timeuom)
-
-select u.eff, 1 policy, u.qty*5*1 qty, 1440*7*1 dur, u.category, u.res, 28 qtyuom, 0 timeuom  --need to factor not by 5 days per week
+select 'U_15_SKU_WEEKLY_PART3'
+       ,u.eff, 1 policy, u.qty*5*1 qty, 1440*7*1 dur, u.category, u.res, 28 qtyuom, 0 timeuom  --need to factor not by 5 days per week
 from resconstraint c,
 
         (select f.eff, r.res, r.loc, nvl(u.maxcaphrs, 8) qty, 12 category
@@ -124,23 +136,32 @@ order by u.res, u.eff;
 
 commit;
 
+/******************************************************************
+** Part 4: Create Resource Penalty Records
+******************************************************************/
 delete respenalty  where substr(res, 1, 6)  in ('INSCAP', 'REPCAP');
 
 commit;
 
-insert into respenalty (eff, rate, category, res, currencyuom, qtyuom, timeuom)
+insert into igpmgr.intins_respenalty 
+( integration_jobid, eff, rate, category, res, currencyuom, qtyuom, timeuom )
 
-select  to_date('01/01/1970', 'MM/DD/YYYY') eff, 330 rate, 112 category, res, 15 currencyuom, 28 qtyuom, 0 timeuom
+select 'U_15_SKU_WEEKLY_PART4' 
+       ,v_init_eff_date eff, 330 rate, 112 category, res, 15 currencyuom, 28 qtyuom, 0 timeuom
 from res
 where substr(res, 1, 6)  in ('INSCAP', 'REPCAP');
 
 commit;
 
--- assign minimum capacity constraint  
 
-insert into resconstraint (eff, policy, qty, dur, category, res, qtyuom, timeuom)
+/******************************************************************
+** Part 5: assign minimum capacity constraint  
+******************************************************************/
+insert into igpmgr.intins_resconstraint 
+( integration_jobid, eff, policy, qty, dur, category, res, qtyuom, timeuom )
 
-select u.eff, 1 policy, u.qty*5*1 qty, 1440*7*1 dur, u.category, u.res, 28 qtyuom, 0 timeuom
+select 'U_15_SKU_WEEKLY_PART5'
+       ,u.eff, 1 policy, u.qty*5*1 qty, 1440*7*1 dur, u.category, u.res, 28 qtyuom, 0 timeuom
 from resconstraint c,
 
         (select f.eff, r.res, r.loc, nvl(u.mincaphrs, 9) qty, 11 category
@@ -168,9 +189,14 @@ order by u.res, u.eff;
 
 commit;
 
-insert into respenalty (eff, rate, category, res, currencyuom, qtyuom, timeuom)
+/******************************************************************
+** Part 6: Resource Penalty
+******************************************************************/
+insert into igpmgr.intins_respenalty 
+( integration_jobid, eff, rate, category, res, currencyuom, qtyuom, timeuom )
 
-select  to_date('01/01/1970', 'MM/DD/YYYY') eff, 330 rate, 111 category, res, 15 currencyuom, 28 qtyuom, 0 timeuom
+select  'U_15_SKU_WEEKLY_PART6'
+        ,v_init_eff_date eff, 330 rate, 111 category, res, 15 currencyuom, 28 qtyuom, 0 timeuom
 from res
 where substr(res, 1, 6)  in ('INSCAP', 'REPCAP');
 

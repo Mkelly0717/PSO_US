@@ -7,8 +7,10 @@ set define off;
 
 begin
 
--- create production methods, BOM's resources and constraints for inspection processes
---less than one minute
+/******************************************************************
+** Part 0: create production methods, BOM's resources and         * 
+**         constraints for inspection processes                   * 
+******************************************************************/
 
 delete productionmethod where productionmethod = 'INS' and item||loc in 
 
@@ -56,12 +58,24 @@ delete res where res||loc in
     
 commit;
 
-insert into bom (item, loc, bomnum,     subord,     drawqty,     eff,     disc,     offset,     mixfactor,     yieldfactor,     shrinkagefactor,     drawtype,     explodesw,     unitconvfactor,     enablesw,     
-  ecn,     supersedesw,     ff_trigger_control,     qtyuom,     qtyperassembly)
+/******************************************************************
+** Part 1: Create Boms                                            * 
+******************************************************************/
+insert into igpmgr.intins_bom 
+(  integration_jobid, item, loc, bomnum, subord, drawqty, eff, disc
+  ,offset, mixfactor, yieldfactor, shrinkagefactor, drawtype, explodesw
+  ,unitconvfactor, enablesw, ecn, supersedesw, ff_trigger_control
+  ,qtyuom, qtyperassembly
+)
 
-select u.item, u.loc, u.bomnum,     u.subord,     u.drawqty,     TO_DATE('01/01/1970 00:00','MM/DD/YYYY HH24:MI') eff,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     0 offset,     100 mixfactor,     100 yieldfactor,     
-    0 shrinkagefactor,     2 drawtype,     0 explodesw,     0 unitconvfactor,     1 enablesw,     ' ' ecn,     0 supersedesw,   '' ff_trigger_control,     18 qtyuom,     0 qtyperassembly
-from bom b, sku s, sku ss, loc l,
+select 'U_22_PRD_INSPECT_PART1'
+       ,u.item, u.loc, u.bomnum, u.subord, u.drawqty
+       ,TO_DATE('01/01/1970 00:00', 'MM/DD/YYYY HH24:MI') eff
+       ,v_init_eff_date disc, 0 offset, 100 mixfactor
+       ,100 yieldfactor, 0 shrinkagefactor, 2 drawtype, 0 explodesw
+       ,0 unitconvfactor, 1 enablesw, ' ' ecn, 0 supersedesw
+       ,'' ff_trigger_control, 18 qtyuom, 0 qtyperassembly
+from bom b, sku s, sku ss, loc l, 
 
     (select loc, item, matcode||'AI' subord, 1 bomnum, 1 drawqty
     from udt_yield
@@ -79,7 +93,13 @@ from bom b, sku s, sku ss, loc l,
     and y.productionmethod = 'INS'
     and y.maxcap > 0
     and y.yield > 0
-    and y.matcode||y.loc not in (select distinct matcode||loc from udt_yield where qb = 'AR' and productionmethod = 'INS' and maxcap > 0 and yield > 0)  -- this 2nd part of union is for INS production method which has no B stock yield; only C stock
+    and y.matcode||y.loc not in (select distinct matcode||loc 
+                                   from udt_yield 
+                                  where qb = 'AR' 
+                                    and productionmethod = 'INS' 
+                                    and maxcap > 0 
+                                    and yield > 0)  
+ -- this 2nd part of union is for INS production method which has no B stock yield; only C stock
     ) u
 
 where u.loc = l.loc
@@ -99,15 +119,31 @@ and b.item is null;
 
 commit;
 
-insert into productionmethod (item, loc, productionmethod,     descr,     eff,     priority,     minqty,     incqty,     disc,     leadtime,     maxqty,     offsettype,     loadopt,     maxstartdur,     
-    maxfindur,     splitordersw,     bomnum,     enablesw,     minleadtime,     maxleadtime,     yieldqty,     splitfactor,     nonewsupplydate,     finishcal,     leadtimecal,     workscope,     lotsizesenabledsw)
+/******************************************************************
+** Part 2: Create Production Methods                              * 
+******************************************************************/
+insert into igpmgr.intins_prodmethod 
+(  integration_jobid, item, loc, productionmethod, descr, eff, priority
+  ,minqty, incqty, disc, leadtime, maxqty, offsettype, loadopt
+  ,maxstartdur, maxfindur, splitordersw, bomnum, enablesw, minleadtime
+  ,maxleadtime, yieldqty, splitfactor, nonewsupplydate, finishcal
+  ,leadtimecal, workscope, lotsizesenabledsw
+)
 
-select b.item, b.loc, 'INS' productionmethod, ' ' descr,  to_date('01/01/1970', 'MM/DD/YYYY') eff,     1 priority,     0 minqty,     0 incqty,     to_date('01/01/1970', 'MM/DD/YYYY') disc,     0 leadtime,     0 maxqty,     
-    1 offsettype,     1 loadopt,     0 maxstartdur,     0 maxfindur,     0 splitordersw,     nvl(b.bomnum, 0) bomnum,     1 enablesw,     0 minleadtime,     1440 * 365 * 100 maxleadtime,     0 yieldqty,     1 splitfactor,     
-    TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' finishcal,     ' ' leadtimecal,     ' ' workscope,     0 lotsizesenabledsw
-from sku s, bom b, loc l, item i,
+select 'U_22_PRD_INSPECT_PART2'
+       ,b.item, b.loc, 'INS' productionmethod, ' ' descr
+       ,v_init_eff_date eff, 1 priority, 0 minqty, 0 incqty
+       ,v_init_eff_date disc, 0 leadtime, 0 maxqty, 1 offsettype
+       ,1 loadopt, 0 maxstartdur, 0 maxfindur, 0 splitordersw
+       ,nvl(b.bomnum, 0) bomnum, 1 enablesw, 0 minleadtime
+       ,1440 * 365 * 100 maxleadtime, 0 yieldqty, 1 splitfactor
+       ,v_init_eff_date nonewsupplydate, ' ' finishcal, ' ' leadtimecal
+       ,' ' workscope, 0 lotsizesenabledsw
+from sku s, bom b, loc l, item i, 
 
-    (select item, loc, productionmethod, bomnum from productionmethod where productionmethod = 'INS'
+    (select item, loc, productionmethod, bomnum 
+       from productionmethod 
+      where productionmethod = 'INS'
     ) p
     
 where s.loc = l.loc
@@ -124,12 +160,22 @@ and b.bomnum = p.bomnum(+)
 and p.item is null;
 
 commit;
+/******************************************************************
+** Part 3: Create Res Records                                     * 
+******************************************************************/
+insert into igpmgr.intins_res 
+(  integration_jobid, res, loc, type, cal, cost, descr, avgskuchg
+  ,avgfamilychg, avgskuchgcost, avgfamilychgcost, levelloadsw
+  ,levelseqnum, criticalitem, checkmaxcap, unitpenalty, adjfactor
+  ,source, enablesw, subtype, qtyuom, currencyuom, productionfamilychgoveropt
+)
 
-insert into res (res, loc, type, cal, cost,   descr,  avgskuchg,   avgfamilychg, avgskuchgcost,   avgfamilychgcost,  levelloadsw,     
-    levelseqnum,    criticalitem,  checkmaxcap,  unitpenalty,  adjfactor, source,  enablesw, subtype, qtyuom,  currencyuom,  productionfamilychgoveropt)
-
-select u.res, u.loc, u.type, ' ' cal, 0 cost,     ' ' descr,     0 avgskuchg,     0 avgfamilychg,     0 avgskuchgcost,     0 avgfamilychgcost,     0 levelloadsw,     
-    1 levelseqnum,     ' ' criticalitem,     1 checkmaxcap,     0 unitpenalty,     1 adjfactor,     ' ' source,     1 enablesw,     1 subtype,     u.qtyuom,     15 currencyuom,     0 productionfamilychgoveropt
+select 'U_22_PRD_INSPECT_PART3'
+       ,u.res, u.loc, u.type, ' ' cal, 0 cost, ' ' descr, 0 avgskuchg
+       ,0 avgfamilychg, 0 avgskuchgcost, 0 avgfamilychgcost, 0 levelloadsw
+       ,1 levelseqnum, ' ' criticalitem, 1 checkmaxcap, 0 unitpenalty
+       ,1 adjfactor, ' ' source, 1 enablesw, 1 subtype, u.qtyuom
+       ,15 currencyuom, 0 productionfamilychgoveropt
 from res r, 
 
     (select distinct 'INSCAP'||'@'||s.loc res, s.loc, 4 type, 28 qtyuom
@@ -143,7 +189,11 @@ from res r,
     
     union
     
-    select distinct 'INSCST'||'@'||lpad(i.u_materialcode, 2, '0')||s.loc res, s.loc, 4 type, 18 qtyuom
+    select distinct 'INSCST'
+                  ||'@'
+                  ||lpad(i.u_materialcode, 2, '0')
+                  ||s.loc res
+                  ,s.loc, 4 type, 18 qtyuom
     from sku s, loc l, item i
     where s.loc = l.loc
     and l.loc_type in ( 2, 4)
@@ -158,18 +208,32 @@ and u.res = r.res(+)
 and r.res is null;
 
 commit;
+/******************************************************************
+** Part 4: Create 2 production steps & resources;                 * 
+**         1 for capacity and 2 for cost                          * 
+******************************************************************/
+insert into igpmgr.intins_productionstep 
+(  integration_jobid, item, loc, productionmethod, stepnum, nextsteptiming
+  ,fixedresreq, prodrate, proddur, prodoffset, enablesw, spread, maxstartdur
+  ,eff, res, descr, loadoffsetdur, prodcost, qtyuom, setup, inusebeforesw
+  ,prodfamily
+)
 
---create 2 production steps & resources; 1 for capacity and 2 for cost
-
-insert into productionstep (item, loc, productionmethod, stepnum,     nextsteptiming,     fixedresreq,     prodrate,     proddur,     prodoffset,     enablesw,     spread,     maxstartdur,     
-    eff,     res,     descr,     loadoffsetdur,     prodcost,     qtyuom,     setup,     inusebeforesw,     prodfamily)
-
-select pm.item, pm.loc, pm.productionmethod, 
-    case when substr(r.res, 1, 6) = 'INSCAP' then 1 else 2 end stepnum,     3 nextsteptiming,     0 fixedresreq,     
-        case when u.rate = 0 then 1 else u.rate end prodrate,     0 proddur,     0 prodoffset,     1 enablesw,     0 spread,     0 maxstartdur,     
-    TO_DATE('01/01/1970','MM/DD/YYYY') eff,     r.res,     ' ' descr,     0 loadoffsetdur,     0 prodcost,     
-    case when substr(r.res, 1, 6) = 'INSCAP' then 28 else 18 end qtyuom,     ' ' setup,     0 inusebeforesw,     ' ' prodfamily 
-from productionmethod pm, productionstep ps, res r, loc l, item i,
+select 'U_22_PRD_INSPECT_PART4'
+       ,pm.item, pm.loc, pm.productionmethod
+       ,case when substr(r.res, 1, 6) = 'INSCAP' then 1 
+             else 2 
+         end stepnum, 3 nextsteptiming, 0 fixedresreq
+       ,case when u.rate = 0 then 1 
+             else u.rate 
+        end prodrate
+        ,0 proddur, 0 prodoffset, 1 enablesw, 0 spread, 0 maxstartdur
+        ,v_init_eff_date eff, r.res, ' ' descr, 0 loadoffsetdur , 0 prodcost
+        , case when substr(r.res, 1, 6) = 'INSCAP' then 28 
+               else 18 
+           end qtyuom
+        ,' ' setup, 0 inusebeforesw, ' ' prodfamily 
+from productionmethod pm, productionstep ps, res r, loc l, item i, 
 
         (select item, loc, round(((maxcap/efficiency)/maxdaysperwk)/maxhrsperday, 0) rate
         from udt_yield
@@ -180,7 +244,14 @@ from productionmethod pm, productionstep ps, res r, loc l, item i,
 
 where pm.loc = l.loc
 and l.loc_type in (2, 4)
-and (r.res = 'INSCST'||'@'||lpad(i.u_materialcode, 2, '0')||pm.loc  or r.res = 'INSCAP'||'@'||lpad(i.u_materialcode, 2, '0')||pm.loc)
+and (r.res = 'INSCST'
+             ||'@'
+             ||lpad(i.u_materialcode, 2, '0')
+             ||pm.loc  or r.res = 'INSCAP'
+             ||'@'
+             ||lpad(i.u_materialcode, 2, '0')
+             ||pm.loc
+    )
 and r.loc = pm.loc
 and r.enablesw = 1
 and pm.enablesw = 1
@@ -194,11 +265,18 @@ and pm.productionmethod = ps.productionmethod(+)
 and ps.item is null;
 
 commit;
+/******************************************************************
+** Part 5: Create Production Yield Records                        * 
+******************************************************************/
+insert into igpmgr.intins_prodyield 
+(  integration_jobid, item, loc, productionmethod, eff
+  ,qtyuom , outputitem, yieldqty
+)
 
-insert into productionyield (item, loc, productionmethod, eff, qtyuom, outputitem, yieldqty)
-
-select p.item, p.loc, p.productionmethod, to_date('01/01/1970', 'MM/DD/YYYY') eff, 18 qtyuom, p.outputitem, p.yield yieldqty 
-from productionyield y, sku so, loc l,
+select 'U_22_PRD_INSPECT_PART5'
+       ,p.item, p.loc, p.productionmethod, v_init_eff_date eff, 18 qtyuom
+       ,p.outputitem, p.yield yieldqty 
+from productionyield y, sku so, loc l, 
 
     (select distinct pm.item, u.item outputitem, pm.loc, pm.productionmethod, u.yield
     from bom b, productionmethod pm, item i,
@@ -221,7 +299,9 @@ from productionyield y, sku so, loc l,
         and i.u_stock in ('B', 'C')
         and y.maxcap > 0
         and y.yield > 0
-        and y.item||y.loc not in (select item||loc from bom where bomnum = 1)
+        and y.item||y.loc not in (select item ||loc 
+                                    from bom 
+                                   where bomnum = 1)
         ) u
 
     where b.item = i.item
@@ -243,13 +323,25 @@ and p.productionmethod = y.productionmethod(+)
 and y.item is null;
 
 commit;
+/******************************************************************
+** Part 6: Create Cost Records                                    * 
+******************************************************************/
+insert into igpmgr.intins_cost 
+(  integration_jobid, cost, enablesw, cumulativesw, groupedsw, sharedsw
+  ,qtyuom, currencyuom, accumcal, maxqty, maxutilization
+)
 
-insert into cost (cost,  enablesw,   cumulativesw,  groupedsw,  sharedsw,  qtyuom,  currencyuom,   accumcal,  maxqty,     maxutilization)
-
-select distinct 'LOCAL:RES:'||u.res||'-202' cost,     1 enablesw,     0 cumulativesw,     0 groupedsw,     0 sharedsw,     18 qtyuom,     15 currencyuom,    ' '   accumcal,     0 maxqty,     0 maxutilization
+select distinct 'U_22_PRD_INSPECT_PART6'
+     ,'LOCAL:RES:'
+       ||u.res
+       ||'-202' cost
+    ,1 enablesw, 0 cumulativesw, 0 groupedsw, 0 sharedsw, 18 qtyuom
+    ,15 currencyuom, ' ' accumcal, 0 maxqty, 0 maxutilization
 from cost c, 
 
-    (select r.res, 'LOCAL:RES:'||r.res||'-202' cost
+    (select r.res, 'LOCAL:RES:'
+                   ||r.res
+                   ||'-202' cost
     from res r
     where r.subtype = 1
     and substr(r.res, 1, 6) = 'INSCST'
@@ -259,17 +351,26 @@ where u.cost = c.cost(+)
 and c.cost is null;
 
 commit;
+/******************************************************************
+** Part 7: Create CostTier Records                                * 
+******************************************************************/
+insert into igpmgr.intins_costtier 
+(  integration_jobid, breakqty, category, value, eff, cost )
 
-insert into costtier (breakqty, category, value, eff, cost)
-
-select distinct 0 breakqty, 303 category, nvl(q.unit_cost, 99) value , to_date('01/01/1970', 'MM/DD/YYYY') eff, c.cost  
+select distinct 'U_22_PRD_INSPECT_PART7'
+         ,0 breakqty, 303 category, nvl(q.unit_cost, 99) value
+         ,v_init_eff_date eff, c.cost  
   
 from cost c, costtier t, 
 
-    (select s.item, s.matcode, s.loc, s.productionmethod, s.stepnum, s.res, s.cost, nvl(u.unit_cost, 99) unit_cost
+    (select s.item, s.matcode, s.loc, s.productionmethod, s.stepnum
+           ,s.res, s.cost, nvl(u.unit_cost, 99) unit_cost
     from
 
-        (select s.item, i.u_materialcode matcode, s.loc, s.productionmethod, s.stepnum, s.res, 'LOCAL:RES:REPCST@'||s.loc||'-202' cost
+        (select s.item, i.u_materialcode matcode, s.loc, s.productionmethod
+               ,s.stepnum, s.res, 'LOCAL:RES:REPCST@'
+                                   ||s.loc
+                                   ||'-202' cost
         from productionstep s, item i
         where s.productionmethod = 'INS'
         and s.stepnum = 2
@@ -291,10 +392,14 @@ and c.cost = t.cost(+)
 and t.cost is null;
 
 commit;
+/******************************************************************
+** Part 8: Create ResCost Records                                 * 
+******************************************************************/
+insert into igpmgr.intins_rescost 
+(  integration_jobid, category, res, localcost, tieredcost )
 
-insert into rescost (category, res, localcost, tieredcost)
-
-select distinct 202 category, u.res, t.cost localcost, ' ' tieredcost
+select distinct 'U_22_PRD_INSPECT_PART1'
+                ,202 category, u.res, t.cost localcost, ' ' tieredcost
 from rescost r, costtier t, 
 
     (select r.res, 'LOCAL:RES:'||r.res||'-202' cost

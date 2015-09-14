@@ -7,13 +7,22 @@ set define off;
 
 begin
 
---less than one minute  
+/******************************************************************
+** Part 1: create Res Records                                     * 
+******************************************************************/ 
+insert into igpmgr.intins_res 
+(  integration_jobid, loc, type, res, cal, cost, descr, avgskuchg
+  ,avgfamilychg , avgskuchgcost, avgfamilychgcost, levelloadsw, levelseqnum
+  ,criticalitem, checkmaxcap, unitpenalty, adjfactor, source
+  , enablesw, subtype, qtyuom, currencyuom, productionfamilychgoveropt
+)
 
-insert into res (loc, type,     res,    cal,  cost,     descr,  avgskuchg,   avgfamilychg,  avgskuchgcost,  avgfamilychgcost,     levelloadsw,     
-    levelseqnum,  criticalitem, checkmaxcap,  unitpenalty,  adjfactor,  source,  enablesw,  subtype,   qtyuom,   currencyuom,     productionfamilychgoveropt)
-
-select distinct u.loc, 9 type,     u.res,     ' '  cal,     0 cost,     ' '  descr,     0 avgskuchg,     0 avgfamilychg,     0 avgskuchgcost,     0 avgfamilychgcost,     0 levelloadsw,     
-    1 levelseqnum,     ' '  criticalitem,     1 checkmaxcap,     0 unitpenalty,     1 adjfactor,  ' ' source,     1 enablesw,     5 subtype,     18 qtyuom,     15 currencyuom,     0 productionfamilychgoveropt
+select distinct 'U_11_SKU_STORAGE_PART1'
+       , u.loc, 9 type, u.res, ' '  cal, 0 cost, ' '  descr, 0 avgskuchg
+       ,0 avgfamilychg, 0 avgskuchgcost, 0 avgfamilychgcost, 0 levelloadsw
+       ,1 levelseqnum, ' '  criticalitem, 1 checkmaxcap, 0 unitpenalty
+       ,1 adjfactor, ' ' source, 1 enablesw, 5 subtype, 18 qtyuom
+       ,15 currencyuom, 0 productionfamilychgoveropt
 from res r, 
 
     (select loc, 'STORAGE@'||loc res from loc where loc_type in (1, 2)
@@ -29,9 +38,14 @@ and r.res is null;
 
 commit;
 
-insert into storagerequirement (item, loc, res, enablesw)
+/******************************************************************
+** Part 2: create storagerequirement Records                      * 
+******************************************************************/ 
+insert into igpmgr.intins_storagereq 
+( integration_jobid, item, loc, res, enablesw)
 
-select s.item, s.loc, r.res, 1 enablesw
+select 'U_11_SKU_STORAGE_PART2'
+       ,s.item, s.loc, r.res, 1 enablesw
 from res r, sku s, storagerequirement t
 where s.loc = r.loc
 and r.subtype = 5
@@ -43,9 +57,18 @@ and t.item is null;
 
 commit;
 
-insert into cost (cost,  enablesw,   cumulativesw,  groupedsw,  sharedsw,  qtyuom,  currencyuom,   accumcal,  maxqty,     maxutilization)
+/******************************************************************
+** Part 3: create Cost Records                                    * 
+******************************************************************/ 
+insert into igpmgr.intins_cost 
+(  integration_jobid, cost, enablesw, cumulativesw, groupedsw
+   , sharedsw, qtyuom, currencyuom, accumcal, maxqty, maxutilization
+)
 
-select  r.cost,     1 enablesw,     0 cumulativesw,     0 groupedsw,     0 sharedsw,     18 qtyuom,     15 currencyuom,   ' '    accumcal,     0 maxqty,     0 maxutilization
+select  'U_11_SKU_STORAGE_PART3'
+        ,r.cost, 1 enablesw, 0 cumulativesw, 0 groupedsw, 0 sharedsw
+        ,18 qtyuom, 15 currencyuom, ' '    accumcal, 0 maxqty
+        ,0 maxutilization
 from cost c, 
     (select 'LOCAL:RES:STORAGE@'||loc||'-202' cost from res where subtype = 5
     ) r
@@ -54,9 +77,14 @@ and c.cost is null;
 
 commit;
 
-insert into costtier (breakqty, category, value, eff, cost)
+/******************************************************************
+** Part 4: create CostTier Records                                * 
+******************************************************************/ 
+insert into igpmgr.intins_costtier 
+ ( integration_jobid, breakqty, category, value, eff, cost )
 
-select distinct 0 breakqty, 303 category,  
+select distinct 'U_11_SKU_STORAGE_PART4'
+       ,0 breakqty, 303 category,  
     case when length(e.cost) = 26 then 0.001 else 90 end value, to_date('01/01/1970', 'MM/DD/YYYY') eff, e.cost
 from costtier t, cost e
 where substr(e.cost, 1, 17) = 'LOCAL:RES:STORAGE'
@@ -65,9 +93,14 @@ and t.cost is null;
 
 commit;
 
-insert into rescost (category, res, localcost, tieredcost)
+/******************************************************************
+** Part 5: create ResCost Records                                 * 
+******************************************************************/
+insert into igpmgr.intins_rescost 
+( integration_jobid, category, res, localcost, tieredcost )
 
-select 202 category, u.res, u.cost localcost, ' ' tieredcost
+select 'U_11_SKU_STORAGE_PART5'
+       ,202 category, u.res, u.cost localcost, ' ' tieredcost
 from rescost r,
 
     (select t.cost, substr(t.cost, 11, 12) res
@@ -83,9 +116,14 @@ commit;
 
 --for loc_type 3 GID SKU
 
-insert into rescost (category, res, localcost, tieredcost)
+/******************************************************************
+** Part 6: create more ResCost Records                            * 
+******************************************************************/
+insert into igpmgr.intins_rescost 
+( integration_jobid, category, res, localcost, tieredcost )
 
-select 202 category, u.res, u.cost localcost, ' ' tieredcost
+select 'U_11_SKU_STORAGE_PART6'
+       ,202 category, u.res, u.cost localcost, ' ' tieredcost
 from rescost r,
 
     (select t.cost,  res   

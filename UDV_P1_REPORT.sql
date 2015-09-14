@@ -1,11 +1,8 @@
 --------------------------------------------------------
---  File created - Thursday-September-10-2015   
---------------------------------------------------------
---------------------------------------------------------
 --  DDL for View UDV_P1_REPORT
 --------------------------------------------------------
 
-  CREATE OR REPLACE FORCE VIEW "SCPOMGR"."UDV_P1_REPORT" ("DATE", "SM_RANK", "LS_PRIORITY", "CT_RANK", "LS_ITEM", "LS_DEST", "LS_SRC", "CT_SOURCE_PC", "CT_DEST_PC", "CT_COST", "CT_TLT", "LS_TLT", "SM_SOURCING", "SM_VALUE", "CT_ET", "CT_DIR") AS 
+  CREATE OR REPLACE VIEW "SCPOMGR"."UDV_P1_REPORT" ("DATE", "SM_RANK", "LS_PRIORITY", "CT_RANK", "LS_ITEM", "LS_DEST", "LS_SRC", "CT_SOURCE_PC", "CT_DEST_PC", "CT_COST", "CT_TLT", "LS_TLT", "SM_SOURCING", "SM_VALUE", "CT_ET", "CT_DIR") AS 
   with src_metric (sourcing, item, dest, src, qty, rank) as
     (
     /* Sourcing Metric Piece */
