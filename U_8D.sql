@@ -18,6 +18,3 @@ u_8d_productionmethod;
 u_8d_sku;
 
 end;
-
-/
-

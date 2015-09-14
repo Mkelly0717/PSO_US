@@ -66,6 +66,3 @@ execute immediate 'truncate table sourcingresmetric';
 execute immediate 'truncate table sourcingmetric';
 
 end;
-
-/
-

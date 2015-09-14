@@ -77,7 +77,7 @@ select 'U_23_PRD_REPAIR_PART4'
      ,TO_DATE('01/01/197000:00','MM/DD/YYYYHH24:MI') eff
      ,TO_DATE('01/01/1970','MM/DD/YYYY') disc, 0 offset
      ,100 mixfactor, 100 yieldfactor, 0 shrinkagefactor, 2 drawtype
-     ,0 explodesw, 0 unitconvfactor, 1 enablesw, '' ecn, 0 supersedesw
+     ,0 explodesw, 0 unitconvfactor, 1 enablesw, ' ' ecn, 0 supersedesw
      ,''ff_trigger_control, 18 qtyuom, 0 qtyperassembly
 from bom b, sku s, sku ss, 
 

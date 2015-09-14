@@ -102,6 +102,3 @@ Begin
     DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESCOST');
 
 End;
-
-/
-

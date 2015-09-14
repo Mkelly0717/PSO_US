@@ -1,7 +1,4 @@
 --------------------------------------------------------
---  File created - Friday-September-11-2015   
---------------------------------------------------------
---------------------------------------------------------
 --  DDL for View UDV_INTJOBS_TABLE
 --------------------------------------------------------
 
@@ -12,9 +9,8 @@
       ,"INSERTCT"
       ,"UPDATECT"
       ,"TOTALROWSCT"
-      ,to_char(lastexec,'MM-DD-YY HH:MI:SS') as "LASTEXEC"
+      ,to_char(lastexec,'MM-DD-YY HH:MI:SS') as "LAST EXECUTED"
       ,"ERRORCODE"
-
     from igpmgr.intjobs
     where int_tablename like '%BOM%'
         or int_tablename like '%CAL%'
@@ -31,5 +27,6 @@
         or int_tablename like '%RES%'
         or int_tablename like '%SKU%'
         or int_tablename like '%SOURCING%'
+        or int_tablename like '%STORAGE%'
         or int_tablename like '%UDT%'
-    order by lastexec desc;
+    order by "LASTEXEC" desc;

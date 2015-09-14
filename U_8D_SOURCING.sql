@@ -46,6 +46,3 @@ delete sourcing;
 commit;
 
 end;
-
-/
-

@@ -77,7 +77,7 @@ select 'U_22_PRD_INSPECT_PART1'
        ,'' ff_trigger_control, 18 qtyuom, 0 qtyperassembly
 from bom b, sku s, sku ss, loc l, 
 
-    (select loc, item, matcode||'AI' subord, 1 bomnum, 1 drawqty
+    (select loc, item, '4001AI' subord, 1 bomnum, 1 drawqty
     from udt_yield
     where productionmethod = 'INS'
     and qb = 'AR'
@@ -86,7 +86,7 @@ from bom b, sku s, sku ss, loc l,
 
     union
 
-    select y.loc, y.item, matcode||'AI' subord, 1 bomnum, 1 drawqty
+    select y.loc, y.item, '4001AI' subord, 1 bomnum, 1 drawqty
     from udt_yield y, item i
     where y.item = i.item
     and i.u_stock = 'C'

@@ -22,6 +22,3 @@ delete productionmethod;
 commit;
 
 end;
-
-/
-

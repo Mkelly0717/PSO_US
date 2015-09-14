@@ -52,6 +52,3 @@ delete sku;
 commit;
 
 end;
-
-/
-

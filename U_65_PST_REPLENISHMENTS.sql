@@ -279,6 +279,3 @@ order by loc, subord, eff, item, dur);
 commit;
 
 end;
-
-/
-

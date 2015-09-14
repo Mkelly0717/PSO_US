@@ -203,7 +203,7 @@ select 'U_10_SKU_BASE_PART4'
    , 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
 from sku s, loc l, item i, 
 
-    (select distinct matcode||'AI' item, loc 
+    (select distinct '4001AI' item, loc 
     from udt_yield
     
     union

@@ -1356,6 +1356,8 @@ where cost.cost = lane_3zip_costed.cost
 and lane_3zip_costed.cost = costtier.cost(+)
 and costtier.value >= 10;
 
+commit;
+
 /**********************************************************
 ** Part 17: Now Populate teh ResCost table
 ***********************************************************/
