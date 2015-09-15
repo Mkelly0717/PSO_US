@@ -56,6 +56,3 @@ execute immediate 'create table SCPOMGR.MAK_SKUCONSTR_SRC_MISSING
 as select * from SCPOMGR.SKUCONSTR_SRC_MISSING';
 
 end;
-
-/
-

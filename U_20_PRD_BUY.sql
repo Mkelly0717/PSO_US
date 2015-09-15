@@ -1,4 +1,9 @@
- CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_20_PRD_BUY" as
+--------------------------------------------------------
+--  DDL for Procedure U_20_PRD_BUY
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_20_PRD_BUY" as
 
 begin
 

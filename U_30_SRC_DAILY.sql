@@ -1,5 +1,9 @@
-create or replace
-PROCEDURE           "U_30_SRC_DAILY" as
+--------------------------------------------------------
+--  DDL for Procedure U_30_SRC_DAILY
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_30_SRC_DAILY" as
 
 begin
 

@@ -1,5 +1,9 @@
-create or replace
-PROCEDURE           "U_23_PRD_REPAIR" as
+--------------------------------------------------------
+--  DDL for Procedure U_23_PRD_REPAIR
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_23_PRD_REPAIR" as
 
 begin
 

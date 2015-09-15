@@ -55,13 +55,33 @@ from sku s, loc l, item i,
     where maxcap > 0
       and yield > 0
     ) u
-    
 where u.loc = l.loc
 and u.item = i.item
 and l.loc_type in ( 2, 4)
 and i.enablesw = 1
 and l.enablesw = 1
-and i.u_stock in ('A', 'B', 'C')
+and (
+      ( i.u_stock = 'C' 
+          and exists ( select 1
+                         from udt_plant_status ps
+                        where u.loc=ps.loc
+                          and ( ps.res like '%RUSOURCE' 
+                                 or 
+                                ps.res like '%RUDEST' 
+                               )
+                          and ps.status=1
+                     ) 
+       )
+     or 
+     ( i.u_stock in ('A', 'B') 
+         and exists ( select 1
+                        from udt_plant_status ps
+                       where ps.loc=u.loc
+                         and ps.res like 'REPAIR' 
+                         and ps.status=1
+                     )
+     )
+    )
 and u.item = s.item(+)
 and u.loc = s.loc(+)
 and s.item is null;
@@ -631,6 +651,3 @@ update sku set ohpost = (select min(startdate) from dfutoskufcst);
 commit;
 
 end;
-
-/
-

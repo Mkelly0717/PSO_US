@@ -140,6 +140,3 @@ and r.res is null;
 commit;
 
 end;
-
-/
-

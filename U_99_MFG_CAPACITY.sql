@@ -19,6 +19,3 @@ from tmp_mfgcap;
 commit;
 
 end;
-
-/
-

@@ -1,5 +1,9 @@
-create or replace
-procedure         u_8d_igptables as
+--------------------------------------------------------
+--  DDL for Procedure U_8D_IGPTABLES
+--------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_8D_IGPTABLES" as
 
 begin
 

@@ -7,7 +7,6 @@ set define off;
 
 begin
 
-
 /******************************************************************
 ** Part 1: category 1 totdmd; dfutoskufcst has already been 
 **         filtered by startdate, u_area, dmdgroup, etc.
@@ -203,6 +202,3 @@ where substr(res, 1, 6)  in ('INSCAP', 'REPCAP');
 commit;
 
 end;
-
-/
-
