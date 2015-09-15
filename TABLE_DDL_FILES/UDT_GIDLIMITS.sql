@@ -1,7 +1,4 @@
 --------------------------------------------------------
---  File created - Friday-September-04-2015   
---------------------------------------------------------
---------------------------------------------------------
 --  DDL for Table UDT_GIDLIMITS
 --------------------------------------------------------
 
@@ -24,53 +21,4 @@
   STORAGE(INITIAL 81920 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
   BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA" ;
---------------------------------------------------------
---  DDL for Index PK_UDT_GIDLIMITS
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "SCPOMGR"."PK_UDT_GIDLIMITS" ON "SCPOMGR"."UDT_GIDLIMITS" ("PRIMARY_KEY_COL") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  STORAGE(INITIAL 81920 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
-  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
-  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA" ;
---------------------------------------------------------
---  Constraints for Table UDT_GIDLIMITS
---------------------------------------------------------
-
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS" MODIFY ("U_LOC_TYPE" NOT NULL ENABLE);
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS" ADD CONSTRAINT "PK_UDT_GIDLIMITS" PRIMARY KEY ("PRIMARY_KEY_COL")
-  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  STORAGE(INITIAL 81920 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
-  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
-  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA"  ENABLE;
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS" ADD CONSTRAINT "UDT_GIDLIMITS_C03" CHECK (MATCODE IS NOT NULL) ENABLE;
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS" ADD CONSTRAINT "UDT_GIDLIMITS_C02" CHECK (COUNTRY IS NOT NULL) ENABLE;
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS" MODIFY ("LOC" NOT NULL ENABLE);
---------------------------------------------------------
---  DDL for Trigger TRG_UDT_GIDLIMITS
---------------------------------------------------------
-
-  CREATE OR REPLACE TRIGGER "SCPOMGR"."TRG_UDT_GIDLIMITS" 
--- Optionally restrict this trigger to fire only when really needed
-  BEFORE INSERT 
-  ON UDT_GIDLIMITS
-  FOR EACH ROW
- WHEN (
-new.PRIMARY_KEY_COL is null
-      ) DECLARE
-  v_id UDT_GIDLIMITS.PRIMARY_KEY_COL%TYPE;
-BEGIN
-  -- Select a new value from the sequence into a local variable. As David
-  -- commented, this step is optional. You can directly select into :new.qname_id
-  SELECT SEQ_UDT_GIDLIMITS.nextval INTO v_id FROM DUAL;
-
-  -- :new references the record that you are about to insert into qname. Hence,
-  -- you can overwrite the value of :new.qname_id (qname.qname_id) with the value
-  -- obtained from your sequence, before inserting
-  :new.PRIMARY_KEY_COL := v_id;
-END TRG_UDT_GIDLIMITS;
-/
-ALTER TRIGGER "SCPOMGR"."TRG_UDT_GIDLIMITS" ENABLE;
+  TABLESPACE "SCPODATA"

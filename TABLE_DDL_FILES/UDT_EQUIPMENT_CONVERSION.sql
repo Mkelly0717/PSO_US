@@ -13,8 +13,8 @@
   STORAGE(INITIAL 81920 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
   BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA" ;
+  TABLESPACE "SCPODATA" 
 
-   COMMENT ON COLUMN "SCPOMGR"."UDT_EQUIPMENT_CONVERSION"."U_AREA" IS 'This matches the value in the U_AREA table';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_EQUIPMENT_CONVERSION"."EQUIPMENT_NATIVE" IS 'This is the Actual Rquipment type as it comes from Seibel.';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_EQUIPMENT_CONVERSION"."U_EQUIPMENT_TYPE" IS 'This is the Value of general equipment type. I.E. FB or VN. Loc.U_Equipment_Type will be updated with this value and it will be used when accesing the UDT_COST_TRANSIT table.';
+   COMMENT ON COLUMN "SCPOMGR"."UDT_EQUIPMENT_CONVERSION"."U_AREA" IS 'This matches the value in the U_AREA table'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_EQUIPMENT_CONVERSION"."EQUIPMENT_NATIVE" IS 'This is the Actual Rquipment type as it comes from Seibel.'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_EQUIPMENT_CONVERSION"."U_EQUIPMENT_TYPE" IS 'This is the Value of general equipment type. I.E. FB or VN. Loc.U_Equipment_Type will be updated with this value and it will be used when accesing the UDT_COST_TRANSIT table.'

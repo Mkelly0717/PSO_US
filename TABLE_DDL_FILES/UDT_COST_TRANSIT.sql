@@ -24,17 +24,17 @@
   STORAGE(INITIAL 81920 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
   PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
   BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
-  TABLESPACE "SCPODATA" ;
+  TABLESPACE "SCPODATA" 
 
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DIRECTION" IS 'Transaction flow type (Issue vs Collection...)';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."SOURCE_CO" IS 'Country of the source location';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."SOURCE_PC" IS 'postal code of the source location';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DEST_CO" IS 'Cuountry of the destinaitn location.';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DEST_PC" IS 'Postal code of the destination locaiton.';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."COST_KM" IS 'Cost in miles for US and Km for EU';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."COST_PALLET" IS 'Cost per pallet in dollars';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DISTANCE" IS 'distinace in miles or kilometers';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."SOURCE_GEO" IS 'Source GeoCode - First thres digits of the 5 digit postal code.';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DEST_GEO" IS 'Destination GeoCode - First thres digits of the 5 digit postal code.';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."U_RATE_TYPE" IS 'Rate type: Spot or Other';
-   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."U_EQUIPMENT_TYPE" IS 'Used to hold the equipment type of Flatbed or Tailer.';
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DIRECTION" IS 'Transaction flow type (Issue vs Collection...)'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."SOURCE_CO" IS 'Country of the source location'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."SOURCE_PC" IS 'postal code of the source location'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DEST_CO" IS 'Cuountry of the destinaitn location.'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DEST_PC" IS 'Postal code of the destination locaiton.'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."COST_KM" IS 'Cost in miles for US and Km for EU'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."COST_PALLET" IS 'Cost per pallet in dollars'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DISTANCE" IS 'distinace in miles or kilometers'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."SOURCE_GEO" IS 'Source GeoCode - First thres digits of the 5 digit postal code.'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."DEST_GEO" IS 'Destination GeoCode - First thres digits of the 5 digit postal code.'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."U_RATE_TYPE" IS 'Rate type: Spot or Other'
+   COMMENT ON COLUMN "SCPOMGR"."UDT_COST_TRANSIT"."U_EQUIPMENT_TYPE" IS 'Used to hold the equipment type of Flatbed or Tailer.'
