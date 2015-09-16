@@ -15,6 +15,3 @@ BEGIN
        -- Consider logging the error and then re-raise
        RAISE;
 END V_DATE_TO_EFF;
-
-/
-

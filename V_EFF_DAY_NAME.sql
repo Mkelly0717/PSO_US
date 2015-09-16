@@ -18,6 +18,3 @@ dayname:=rtrim (to_char (  to_date ('19700101', 'YYYYMMDD'
        -- Consider logging the error and then re-raise
        RAISE;
 END v_eff_day_name;
-
-/
-

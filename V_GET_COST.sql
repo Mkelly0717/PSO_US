@@ -72,6 +72,3 @@
     -- Consider logging the error and then re-raise
     RAISE;
   END V_GET_COST;
-
-/
-

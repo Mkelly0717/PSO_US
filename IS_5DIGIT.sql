@@ -19,6 +19,3 @@ BEGIN
   exception
     when others then return 0;
 END IS_5DIGIT;
-
-/
-

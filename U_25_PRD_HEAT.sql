@@ -69,11 +69,20 @@ commit;
 ** Part 4: create BOM's for Heat treat
 *************************************************************/
 
-insert into bom (item, loc, bomnum,     subord,     drawqty,     eff,     disc,     offset,     mixfactor,     yieldfactor,     shrinkagefactor,     drawtype,     explodesw,     unitconvfactor,     enablesw,     
-  ecn,     supersedesw,     ff_trigger_control,     qtyuom,     qtyperassembly)
+insert into igpmgr.intins_bom 
+(  integration_jobid, item, loc, bomnum, subord, drawqty, eff
+  ,disc, offset, mixfactor, yieldfactor, shrinkagefactor, drawtype
+  ,explodesw, unitconvfactor, enablesw, ecn, supersedesw
+  ,ff_trigger_control, qtyuom, qtyperassembly
+)
 
-select u.item, u.loc, u.bomnum,     u.subord,     u.drawqty,     TO_DATE('01/01/1970 00:00','MM/DD/YYYY HH24:MI') eff,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     0 offset,     100 mixfactor,     100 yieldfactor,     
-    0 shrinkagefactor,     2 drawtype,     0 explodesw,     0 unitconvfactor,     1 enablesw,     ' ' ecn,     0 supersedesw,   '' ff_trigger_control,     18 qtyuom,     0 qtyperassembly
+select 'U_25_PRD_HEAT_PART4'
+      ,u.item, u.loc, u.bomnum, u.subord, u.drawqty
+      ,TO_DATE('01/01/1970 00:00', 'MM/DD/YYYY HH24:MI') eff
+      ,v_init_eff_date disc, 0 offset, 100 mixfactor, 100 yieldfactor
+      ,0 shrinkagefactor, 2 drawtype, 0 explodesw, 0 unitconvfactor
+      ,1 enablesw, ' ' ecn, 0 supersedesw, '' ff_trigger_control
+      ,18 qtyuom, 0 qtyperassembly
 from bom b, sku s, sku ss, 
 
     (select y.item, i.u_materialcode||sb.subord subord, y.loc, 1 bomnum, 1 drawqty
@@ -81,8 +90,10 @@ from bom b, sku s, sku ss,
         
         (select distinct u_qualitybatch,
             case when u_qualitybatch = 'RUCUSTPS' then 'RUCUST'
-                    when u_qualitybatch = 'RUPLUSPS' then 'RUPLUS'
-                    when u_qualitybatch = 'RUPREMPS' then 'RUPREMIUM' else '' end subord
+                 when u_qualitybatch = 'RUPLUSPS' then 'RUPLUS'
+                 when u_qualitybatch = 'RUPREMPS' then 'RUPREMIUM' 
+                 else '' 
+            end subord
         from item
         where u_stock = 'C'
         --and substr(u_qualitybatch, 3, 2) = 'PS'
@@ -104,8 +115,7 @@ and u.item <> u.subord
 and u.item = b.item(+)
 and u.loc = b.loc(+)
 and u.subord = b.subord(+)
-and u.bomnum = b.bomnum(+)      
-and b.item is null;
+and u.bomnum = b.bomnum(+)and b.item is null;
 
 commit;
 
@@ -113,14 +123,26 @@ commit;
 ** Part 5: Create Resource Records
 *************************************************************/
 
-insert into res (res, loc, type, cal, cost,   descr,  avgskuchg,   avgfamilychg, avgskuchgcost,   avgfamilychgcost,  levelloadsw,     
-    levelseqnum,    criticalitem,  checkmaxcap,  unitpenalty,  adjfactor, source,  enablesw, subtype, qtyuom,  currencyuom,  productionfamilychgoveropt)
+insert into igpmgr.intins_res 
+( integration_jobid, res, loc, type, cal, cost, descr, avgskuchg
+ ,avgfamilychg, avgskuchgcost, avgfamilychgcost, levelloadsw
+ ,levelseqnum, criticalitem, checkmaxcap, unitpenalty, adjfactor
+ ,source, enablesw, subtype, qtyuom, currencyuom, productionfamilychgoveropt
+)
 
-select u.res, u.loc, u.type, ' ' cal, 0 cost,     ' ' descr,     0 avgskuchg,     0 avgfamilychg,     0 avgskuchgcost,     0 avgfamilychgcost,     0 levelloadsw,     
-    1 levelseqnum,     ' ' criticalitem,     1 checkmaxcap,     0 unitpenalty,     1 adjfactor,     ' ' source,     1 enablesw,     1 subtype,     u.qtyuom,     11 currencyuom,     0 productionfamilychgoveropt
+select 'U_25_PRD_HEAT_PART5'
+       ,u.res, u.loc, u.type, ' ' cal, 0 cost, ' ' descr, 0 avgskuchg
+       ,0 avgfamilychg, 0 avgskuchgcost, 0 avgfamilychgcost, 0 levelloadsw
+       ,1 levelseqnum, ' ' criticalitem, 1 checkmaxcap, 0 unitpenalty
+       ,1 adjfactor, ' ' source, 1 enablesw, 1 subtype, u.qtyuom
+       ,11 currencyuom, 0 productionfamilychgoveropt
 from res r, 
 
-    (select distinct 'HTRCAP'||'@'||lpad(i.u_materialcode, 2, '0')||s.loc res, s.loc, 4 type, 28 qtyuom
+    (select distinct 'HTRCAP'
+                           ||'@'
+                           ||lpad(i.u_materialcode, 2, '0')
+                           ||s.loc res
+                      , s.loc, 4 type, 28 qtyuom
     from sku s, loc l, item i,
     
         (select distinct loc
@@ -138,7 +160,11 @@ from res r,
     
     union
     
-    select distinct 'HTRCST'||'@'||lpad(i.u_materialcode, 2, '0')||s.loc res, s.loc, 4 type, 18 qtyuom
+    select distinct 'HTRCST'
+                          ||'@'
+                          ||lpad(i.u_materialcode, 2, '0')
+                          ||s.loc res
+                     , s.loc, 4 type, 18 qtyuom
     from sku s, loc l, item i,
     
         (select distinct matcode, loc
@@ -166,15 +192,33 @@ commit;
 ** Part 6: Create Production Methods
 *************************************************************/
 
-insert into productionmethod (item, loc, productionmethod,     descr,     eff,     priority,     minqty,     incqty,     disc,     leadtime,     maxqty,     offsettype,     loadopt,     maxstartdur,     
-    maxfindur,     splitordersw,     bomnum,     enablesw,     minleadtime,     maxleadtime,     yieldqty,     splitfactor,     nonewsupplydate,     finishcal,     leadtimecal,     workscope,     lotsizesenabledsw)
+insert into igpmgr.intins_prodmethod 
+(  integration_jobid, item, loc, productionmethod, descr
+  ,eff, priority, minqty, incqty, disc, leadtime, maxqty
+  ,offsettype, loadopt, maxstartdur, maxfindur, splitordersw
+  ,bomnum, enablesw, minleadtime, maxleadtime, yieldqty
+  ,splitfactor, nonewsupplydate, finishcal, leadtimecal
+  ,workscope, lotsizesenabledsw
+)
 
-select b.item, b.loc, t.productionmethod, ' ' descr,  to_date('01/01/1970', 'MM/DD/YYYY') eff,     1 priority,     0 minqty,     0 incqty,     to_date('01/01/1970', 'MM/DD/YYYY') disc,     0 leadtime,     0 maxqty,     
-    1 offsettype,     1 loadopt,     0 maxstartdur,     0 maxfindur,     0 splitordersw,     nvl(b.bomnum, 0) bomnum,     1 enablesw,     0 minleadtime,     1440 * 365 * 100 maxleadtime,     0 yieldqty,     1 splitfactor,     
-    TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' finishcal,     ' ' leadtimecal,     ' ' workscope,     0 lotsizesenabledsw
-from sku s, bom b, loc l, item i,
-    (select item, loc, productionmethod from productionmethod where productionmethod = 'HTR') p,
-    (select item, loc, productionmethod from udt_yield where productionmethod = 'HTR') t
+select 'U_25_PRD_HEAT_PART6'
+       ,b.item, b.loc, t.productionmethod, ' ' descr, v_init_eff_date eff
+       ,1 priority, 0 minqty, 0 incqty, v_init_eff_date disc
+       ,0 leadtime, 0 maxqty, 1 offsettype, 1 loadopt, 0 maxstartdur
+       , 0 maxfindur, 0 splitordersw, nvl(b.bomnum, 0) bomnum
+       ,1 enablesw, 0 minleadtime, 1440 * 365 * 100 maxleadtime
+       ,0 yieldqty, 1 splitfactor
+       ,v_init_eff_date nonewsupplydate, ' ' finishcal, ' ' leadtimecal
+       ,' ' workscope, 0 lotsizesenabledsw
+from sku s, bom b, loc l, item i, 
+    (select item, loc, productionmethod 
+       from productionmethod 
+      where productionmethod = 'HTR'
+    ) p,
+    (select item, loc, productionmethod 
+       from udt_yield 
+      where productionmethod = 'HTR'
+    ) t
 where s.loc = l.loc
 and l.loc_type = 2
 and s.enablesw = 1 
@@ -197,21 +241,42 @@ commit;
 ** Part 7: Create Production Step Records
 *************************************************************/
 
-insert into productionstep (item, loc, productionmethod, stepnum,     nextsteptiming,     fixedresreq,     prodrate,     proddur,     prodoffset,     enablesw,     spread,     maxstartdur,     
-  eff,     res,     descr,     loadoffsetdur,     prodcost,     qtyuom,     setup,     inusebeforesw,     prodfamily)
+insert into igpmgr.intins_productionstep 
+(  integration_jobid, item, loc, productionmethod, stepnum
+  ,nextsteptiming, fixedresreq, prodrate, proddur, prodoffset
+  ,enablesw, spread, maxstartdur, eff, res, descr, loadoffsetdur
+  ,prodcost, qtyuom, setup, inusebeforesw, prodfamily
+)
 
-select pm.item, pm.loc, pm.productionmethod, 
-        case when substr(r.res, 1, 6) = 'HTRCAP' then 1 else 2 end stepnum, 3 nextsteptiming,     0 fixedresreq,     u.rate prodrate,     0 proddur,     0 prodoffset,     1 enablesw,     0 spread,     0 maxstartdur,     
-    TO_DATE('01/01/1970','MM/DD/YYYY') eff,     r.res,     ' ' descr,     0 loadoffsetdur,     0 prodcost,     
-        case when substr(r.res, 1, 6) = 'HTRCAP' then 28 else 18 end qtyuom,     ' ' setup,     0 inusebeforesw,     ' ' prodfamily 
-from productionmethod pm, productionstep ps, res r, item i,
+select 'U_25_PRD_HEAT_PART7'
+       ,pm.item, pm.loc, pm.productionmethod
+       , case when substr(r.res, 1, 6) = 'HTRCAP' then 1 
+              else 2 
+          end stepnum
+       ,3 nextsteptiming, 0 fixedresreq, u.rate prodrate, 0 proddur
+       ,0 prodoffset, 1 enablesw, 0 spread, 0 maxstartdur
+       ,v_init_eff_date eff, r.res, ' ' descr, 0 loadoffsetdur, 0 prodcost
+       ,case when substr(r.res, 1, 6) = 'HTRCAP' then 28
+             else 18 
+         end qtyuom
+       , ' ' setup, 0 inusebeforesw, ' ' prodfamily 
+from productionmethod pm, productionstep ps, res r, item i, 
 
         (select item, loc, nvl(round(((maxcap/efficiency)/maxdaysperwk)/maxhrsperday, 0), 1) rate
         from udt_yield
-        where productionmethod = 'HTR') u
+        where productionmethod = 'HTR'
+        ) u
 
 where pm.item = i.item
-and (r.res = 'HTRCST'||'@'||lpad(i.u_materialcode, 2, '0')||pm.loc  or r.res = 'HTRCAP'||'@'||lpad(i.u_materialcode, 2, '0')||pm.loc)
+and (r.res = 'HTRCST'
+                   ||'@'
+                   ||lpad(i.u_materialcode, 2, '0')
+                   ||pm.loc  
+                or r.res = 'HTRCAP'
+                   ||'@'
+                   ||lpad(i.u_materialcode, 2, '0')
+                   ||pm.loc
+     )
 and r.loc = pm.loc
 and r.enablesw = 1
 and pm.enablesw = 1
@@ -230,15 +295,19 @@ commit;
 *************************************************************/
 
 
-insert into productionyield (item, loc, productionmethod, eff, qtyuom, outputitem, yieldqty)
+insert into igpmgr.intins_prodyield 
+(  integration_jobid, item, loc, productionmethod, eff
+  ,qtyuom, outputitem, yieldqty 
+)
 
-select p.item, p.loc, p.productionmethod, to_date('01/01/1970', 'MM/DD/YYYY') eff, 18 qtyuom, p.item outputitem, 1 yieldqty 
+select 'U_25_PRD_HEAT_PART8'
+       ,p.item, p.loc, p.productionmethod, v_init_eff_date eff
+       ,18 qtyuom , p.item outputitem, 1 yieldqty 
 from productionyield y, productionmethod p
 where p.item = y.item(+)
 and p.loc = y.loc(+)
 and p.productionmethod = y.productionmethod(+)
 and y.item is null;
-
 commit;
 
 
@@ -246,28 +315,38 @@ commit;
 ** Part 9: Create Cost records for Heat treat
 *************************************************************/
 
-insert into cost (cost,  enablesw,   cumulativesw,  groupedsw,  sharedsw,  qtyuom,  currencyuom,   accumcal,  maxqty,     maxutilization)
+insert into igpmgr.intins_cost 
+(  integration_jobid, cost, enablesw, cumulativesw, groupedsw
+  ,sharedsw, qtyuom, currencyuom, accumcal, maxqty, maxutilization
+)
 
-select distinct u.cost,     1 enablesw,     0 cumulativesw,     0 groupedsw,     0 sharedsw,     18 qtyuom,     11 currencyuom,    ' '   accumcal,     0 maxqty,     0 maxutilization
+select distinct 'U_25_PRD_HEAT_PART9'
+                ,u.cost, 1 enablesw, 0 cumulativesw, 0 groupedsw
+                ,0 sharedsw, 18 qtyuom, 11 currencyuom, ' '   accumcal
+                ,0 maxqty, 0 maxutilization
 from cost c, 
 
-    (select 'LOCAL:RES:'||res||'-202' cost
-    from res
-    where subtype = 1
-    and substr(res, 1, 6) = 'HTRCST') u
+    (select 'LOCAL:RES:'
+                      ||res
+                      ||'-202' cost
+      from res
+     where subtype = 1
+    and substr(res, 1, 6) = 'HTRCST'
+    ) u
     
 where u.cost = c.cost(+)
 and c.cost is null;
-
 commit;
 
 /*************************************************************
 ** Part 10: Create Production CostTier Records for Heat treat
 *************************************************************/
 
-insert into costtier (breakqty, category, value, eff, cost)
+insert into igpmgr.intins_costtier 
+(  integration_jobid, breakqty, category, value, eff, cost )
 
-select distinct 0 breakqty, 303 category, q.unit_cost value , to_date('01/01/1970', 'MM/DD/YYYY') eff, c.cost  
+select distinct 'U_25_PRD_HEAT_PART10', 0 breakqty, 303 category
+                ,q.unit_cost value , v_init_eff_date eff, c.cost  
   
 from cost c, costtier t, 
 
@@ -275,10 +354,15 @@ from cost c, costtier t,
 
     from cost c,
 
-        (select matcode, loc, process, unit_cost from udt_cost_unit where process = 'HTR') q,
+        (select matcode, loc, process, unit_cost 
+           from udt_cost_unit 
+          where process = 'HTR'
+        ) q,
 
         (select res, loc, 
-            case when substr(res, 8, 1) = '0' then substr(res, 9, 1) else substr(res, 8, 2) end matcode
+            case when substr(res, 8, 1) = '0' then substr(res, 9, 1) 
+                 else substr(res, 8, 2) 
+             end matcode
          from res
          where substr(res, 1, 6) = 'HTRCST'
          ) r
@@ -293,18 +377,23 @@ where c.cost = q.cost
 and c.cost = t.cost(+)
 and t.cost is null;
 
+
 commit;
 
 /*************************************************************
 ** Part 11: Create Production  ResCost Records for Heat treat
 *************************************************************/
 
-insert into rescost (category, res, localcost, tieredcost)
+insert into igpmgr.intins_rescost 
+(  integration_jobid, category, res, localcost, tieredcost )
 
-select distinct 202 category, u.res, t.cost localcost, ' ' tieredcost
+select distinct 'U_25_PRD_HEAT_PART11'
+                ,202 category, u.res, t.cost localcost, ' ' tieredcost
 from rescost r, costtier t, 
 
-    (select r.res, 'LOCAL:RES:'||r.res||'-202' cost
+    (select r.res, 'LOCAL:RES:'
+                             ||r.res
+                             ||'-202' cost
     from res r
     where r.subtype = 1) u
 
