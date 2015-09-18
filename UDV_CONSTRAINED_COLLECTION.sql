@@ -17,4 +17,4 @@ where K.category = '10'
                    )
                   )
 group by LOC
-having SUM(QTY) >0;
+having SUM(QTY) >0

@@ -23,4 +23,4 @@ from total_collection tc
   , udt_cost_transit ct
 where tc.loc=l.loc
     and l.u_3digitzip=ct.source_geo(+)
-    and ct.source_geo is null;
+    and ct.source_geo is null

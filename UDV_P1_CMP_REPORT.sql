@@ -43,4 +43,4 @@
    ,sm1_cs1_match  smm
    ,sm1_cs1_no_match smnm
   where ctm."DATE"=ctnm."DATE"
-    and smm."DATE"=ctm."DATE";
+    and smm."DATE"=ctm."DATE"

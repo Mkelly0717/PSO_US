@@ -22,4 +22,4 @@ select smc.sm_rank
 from sm1_prank_counts smc
   , sm_p1_total smt
 where SMC.SM_RANK=SMT.SM_RANK
-    and smc.ls_priority <=10;
+    and smc.ls_priority <=10

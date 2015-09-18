@@ -72,7 +72,7 @@ begin
    ,skussparam
    ,sourcing
    ,sourcingmetric
- --  ,storagereq
+   ,storagereq
    )
    values ( v_date
    ,v_bom 
@@ -95,6 +95,6 @@ begin
    ,v_skussparam
    ,v_sourcing
    ,v_sourcingmetric
- --  ,v_storagereq
+   ,v_storagereq
    );
 end;

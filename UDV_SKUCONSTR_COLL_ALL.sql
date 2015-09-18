@@ -41,4 +41,4 @@ select tc.item
 from total_collection tc
   , total_dest ts
 where tc.item=ts.item
-    and tc.loc=ts.loc;
+    and tc.loc=ts.loc

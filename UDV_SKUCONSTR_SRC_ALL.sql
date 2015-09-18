@@ -31,4 +31,4 @@ as
 select td.item, td.loc, td.TotalDemand, ts.TotalSrc
 from total_demand td, total_src ts
 where td.item=ts.item
-  and td.loc=ts.loc;
+  and td.loc=ts.loc

@@ -6,4 +6,4 @@
   select l.loc
 from loc l
 where trim(l.u_equipment_type) is null
-  and l.country='US';
+  and l.country='US'

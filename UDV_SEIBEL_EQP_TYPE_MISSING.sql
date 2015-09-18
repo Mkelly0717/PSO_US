@@ -9,4 +9,4 @@ where (  l.u_equipment_type='X'
             or 
             trim( l.u_equipment_type) is null
            )
-  and l.country='US';
+  and l.country='US'

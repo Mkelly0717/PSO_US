@@ -7,4 +7,4 @@
       , SUM(TOTALDEMAND) as TOTALDEMAND
     from udv_demand_unmet
     group by ITEM
-    order by item asc;
+    order by item asc

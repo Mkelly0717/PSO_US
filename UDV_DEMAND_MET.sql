@@ -40,4 +40,4 @@ from total_demand td
   , total_met tm
 where td.loc=tm.dest(+)
     and TD.ITEM=TM.ITEM(+)
-    and trim(tm.dest) is not null;
+    and trim(tm.dest) is not null

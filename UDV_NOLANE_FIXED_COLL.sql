@@ -15,4 +15,4 @@
         from udt_cost_transit ct
         where ct.source_pc=l1.postalcode
             and ct.dest_pc=l2.postalcode
-        );
+        )

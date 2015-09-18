@@ -40,4 +40,4 @@ as
 from TOTAL_DEMAND TD, TOTAL_MET TM
 where TD.LOC=TM.DEST(+)
   and TD.ITEM=TM.ITEM(+)
-  and trim(tm.dest) is null;
+  and trim(tm.dest) is null

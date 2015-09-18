@@ -21,4 +21,4 @@ select td.item
 from total_demand td, loc l, udt_cost_transit ct
 where td.loc=l.loc
   and l.u_3digitzip=ct.dest_geo(+)
-  and ct.dest_geo is null;
+  and ct.dest_geo is null

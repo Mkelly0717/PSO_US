@@ -145,4 +145,4 @@ SELECT 'Number of SKU lanes lanes ' as  "Validation Check", count(1)
 FROM(
   select *
   from sku
-);
+)

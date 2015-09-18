@@ -23,4 +23,4 @@ from total_collection tc
   , udt_cost_transit ct
 where tc.loc=l.loc
     and l.postalcode=ct.source_pc(+)
-    and ct.source_pc is null;
+    and ct.source_pc is null

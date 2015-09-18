@@ -14,4 +14,4 @@ where i.u_stock = 'A'
                     where sku.loc=tmp.plant
                       and sku.item = i.item
                   )
-order by tmp.plant asc, i.item asc;
+order by tmp.plant asc, i.item asc

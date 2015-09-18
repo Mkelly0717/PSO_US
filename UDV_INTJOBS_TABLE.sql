@@ -29,4 +29,4 @@
         or int_tablename like '%SOURCING%'
         or int_tablename like '%STORAGE%'
         or int_tablename like '%UDT%'
-    order by "LASTEXEC" desc;
+    order by "LASTEXEC" desc

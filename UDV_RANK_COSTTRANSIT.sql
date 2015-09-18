@@ -16,4 +16,4 @@
     order by direction
       , u_equipment_type
       , dest_pc
-      , rank;
+      , rank

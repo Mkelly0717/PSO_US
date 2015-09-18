@@ -21,4 +21,4 @@ select td.item
 from total_demand td, loc l, udt_cost_transit ct
 where td.loc=l.loc
   and l.postalcode=ct.dest_pc(+)
-  and ct.dest_pc is null;
+  and ct.dest_pc is null

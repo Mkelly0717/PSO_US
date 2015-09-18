@@ -11,4 +11,4 @@ where tz.loc=l.loc
               from udt_cost_transit ct
              where ct.source_pc = l.postalcode
                and ct.dest_pc=tz.postalcode
-          );
+          )

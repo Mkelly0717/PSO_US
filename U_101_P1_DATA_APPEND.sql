@@ -1,9 +1,32 @@
 --------------------------------------------------------
---  DDL for View UDV_P1_REPORT
+--  DDL for Procedure U_101_P1_DATA_APPEND
 --------------------------------------------------------
+set define off;
 
-  CREATE OR REPLACE VIEW "SCPOMGR"."UDV_P1_REPORT" ("RDATE", "SM_RANK", "LS_PRIORITY", "CT_RANK", "LS_ITEM", "LS_DEST", "LS_SRC", "CT_SOURCE_PC", "CT_DEST_PC", "CT_COST", "CT_TLT", "LS_TLT", "SM_SOURCING", "SM_VALUE", "CT_ET", "CT_DIR") AS 
-  with src_metric (sourcing, item, dest, src, qty, rank) as
+  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_101_P1_DATA_APPEND" as
+
+begin
+
+insert
+into udt_p1_data
+    (   "RDATE"
+      , "SM_RANK"
+      , "LS_PRIORITY"
+      , "CT_RANK"
+      , "LS_ITEM"
+      , "LS_DEST"
+      , "LS_SRC"
+      , "CT_SOURCE_PC"
+      , "CT_DEST_PC"
+      , "CT_COST"
+      , "CT_TLT"
+      , "LS_TLT"
+      , "SM_SOURCING"
+      , "SM_VALUE"
+      , "CT_ET"
+      , "CT_DIR"
+    )
+with src_metric (sourcing, item, dest, src, qty, rank) as
     (
     /* Sourcing Metric Piece */
     select sm.sourcing
@@ -85,4 +108,6 @@ order by sysdate asc
   ,ls.dest
   ,ls.source
   ,sm.rank asc
-  ,ls.priority
+  ,ls.priority;
+  
+end;

@@ -11,4 +11,4 @@ where s.source=l.loc
                     from udt_cost_transit ct
                    where substr(ct.source_pc,1,5)=substr(l.postalcode,1,5)
                      and substr(ct.dest_pc,1,5)=substr(l2.postalcode,1,5)
-                  );
+                  )

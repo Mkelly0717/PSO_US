@@ -11,4 +11,4 @@
              ) as "%UNMET"
     from udv_demand_met
     group by item
-    order by item asc;
+    order by item asc

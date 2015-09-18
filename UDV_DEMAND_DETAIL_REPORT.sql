@@ -39,4 +39,4 @@ as
        ,tm.sourcing as Sourcing
 from TOTAL_DEMAND TD, TOTAL_MET TM
 where TD.LOC=TM.DEST(+)
-  and td.item=tm.item(+);
+  and td.item=tm.item(+)

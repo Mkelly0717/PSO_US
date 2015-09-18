@@ -13,4 +13,4 @@
     FROM udt_cost_transit ct
     WHERE ct.source_pc = tz.postalcode
     AND ct.dest_pc     =  l.postalcode
-    );
+    )

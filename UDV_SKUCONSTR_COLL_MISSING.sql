@@ -8,4 +8,4 @@
       ,sumqty
       ,totaldest
   from skuconstr_coll_all 
-where totaldest=0;
+where totaldest=0

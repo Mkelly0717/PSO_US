@@ -17,4 +17,4 @@
             and qty > 0
         )
     order by sku.loc asc
-      , sku.item asc;
+      , sku.item asc

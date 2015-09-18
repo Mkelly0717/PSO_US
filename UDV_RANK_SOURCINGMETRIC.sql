@@ -11,4 +11,4 @@
         and sm.dest    =l.loc
         and l.loc_type =3
    group by sm.sourcing ,sm.item ,sm.dest ,sm.source
-   order by sourcing    , item   , dest   , rank asc;
+   order by sourcing    , item   , dest   , rank asc

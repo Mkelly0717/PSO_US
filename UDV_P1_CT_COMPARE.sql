@@ -23,4 +23,4 @@ order by p1d.sm_rank asc
        ,round(smc.count/smt.total_recs*100,3) as "%Total_P1"
 from sm1_prank_counts smc, sm_p1_total smt
 where smc.sm_rank=smt.sm_rank
-and smc.ct_rank <=10;
+and smc.ct_rank <=10

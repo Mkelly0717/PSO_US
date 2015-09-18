@@ -17,4 +17,4 @@
           where n3z.loc             =n5z.loc
             and n3z.item            =n5z.item
             and n3z.u_equipment_type=n5z.u_equipment_type
-    );
+    )

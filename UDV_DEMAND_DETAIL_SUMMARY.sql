@@ -6,4 +6,4 @@
   select item, sum(totaldemand) as TotalDemand
 from UDV_DEMAND_DETAIL_REPORT
 group by ITEM
-order by item asc;
+order by item asc
