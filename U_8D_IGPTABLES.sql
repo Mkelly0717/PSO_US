@@ -64,6 +64,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -85,6 +86,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -106,6 +108,7 @@ update igpmgr.intjobs ij
             or ij.jobid like 'U_20_PRD_BUY_%'
             or ij.jobid like 'U_22_PRD_INSPECT_%'
             or ij.jobid like 'U_23_PRD_REPAIR_%'
+            or ij.jobid like 'U_25_PRD_HEAT_%'
             or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
             or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -127,6 +130,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -143,7 +147,8 @@ update igpmgr.intjobs ij
            or IJ.JOBID like 'U_11_SKU_STORAGE_%'
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -165,7 +170,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -186,7 +192,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -208,6 +215,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -228,7 +236,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -246,7 +255,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -264,7 +274,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -282,7 +293,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -301,7 +313,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -319,7 +332,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -339,6 +353,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -356,7 +371,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -374,7 +390,8 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_15_SKU_WEEKLY_%'
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
-           or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -393,6 +410,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -411,6 +429,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -429,6 +448,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
            ); 
@@ -447,6 +467,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -468,6 +489,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
@@ -489,6 +511,7 @@ update igpmgr.intjobs ij
            or ij.jobid like 'U_20_PRD_BUY_%'
            or ij.jobid like 'U_22_PRD_INSPECT_%'
            or IJ.JOBID like 'U_23_PRD_REPAIR_%'
+           or ij.jobid like 'U_25_PRD_HEAT_%'
            or IJ.JOBID like 'U_29_PRD_RESCONSTR_%'
            or ij.jobid like 'U_30_SRC_DAILY_%'
           );
