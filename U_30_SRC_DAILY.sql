@@ -1,6 +1,14 @@
 --------------------------------------------------------
 --  DDL for Procedure U_30_SRC_DAILY
 --------------------------------------------------------
+/* U_30_SRC_DAILY_PART1:  TPM(4) to SC(2), ST(5) 
+   U_30_SRC_DAILY_PART2:  TPM(4),SC(2),or ST(5) to GLID (3) ==> 5 digit lanes
+   U_30_SRC_DAILY_PART2b: TPM(4),SC(2),or ST(5) to GLID (3) ==> 3 digit lanes
+   U_30_SRC_DAILY_PART3:  
+   U_30_SRC_DAILY_PART4:
+   U_30_SRC_DAILY_PART5:
+   U_30_SRC_DAILY_PART6:
+*/
 set define off;
 
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_30_SRC_DAILY" as
@@ -182,7 +190,7 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= trim(sysdate)
+                      and sku.eff <= v_demand_start_date
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
                     /* added by MAK */
@@ -195,23 +203,27 @@ from sourcing src,
                        sku, postalcode 
                        for the SOURCE SKU
                     */
-                    (select distinct p_yield.outputitem item
-                          ,p_yield.loc
+                    (select distinct i.item
+                          ,l.loc
                           ,l.postalcode source_pc
                           ,l.u_3digitzip source_geo
                           ,ps.status flatbed_status                        
-                    from productionyield p_yield
-                        ,item i
+                    from item i
                         ,loc l
+                        ,sku sku
                         ,udt_plant_status ps                              
-                    where p_yield.outputitem = i.item
-                    and i.u_stock = 'C' 
-                    and p_yield.loc = l.loc
+                    where l.loc=sku.loc
+                    and l.loc_type in (2,4,5)
                     and l.U_AREA='NA'
-                    and l.loc_type = 2
-                    and trim(l.postalcode )  is not null
-                    and trim(l.u_3digitzip ) is not null
-                    and ps.loc=p_yield.loc
+                    and l.postalcode  is not null
+                    and l.u_3digitzip is not null
+                    and is_5digit(l.postalcode) = 1
+                    and is_3digit(l.postalcode) = 1
+                    and l.enablesw=1
+                    and i.item=sku.item
+                    and i.u_stock = 'C'
+                    and i.enablesw=1
+                    and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
                     union 
                     select sku.item
@@ -223,7 +235,7 @@ from sourcing src,
                         ,loc l1
                         ,item i1
                         ,udt_plant_status ps       
-                    where l1.loc_type = 2
+                    where l1.loc_type in (2,4,5)
                       and i1.u_stock='C'
                       and sku.item=i1.item
                       and sku.oh > 0
@@ -233,28 +245,8 @@ from sourcing src,
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
                       and ps.res= 'SOURCEFLATBED'
-                    ) source_sku,
-                    /* Get the sku and the max number of dfu groups */      
-                    (select distinct dv.dmdunit item, dv.loc, max(dv.u_dfu_grp) u_dfu_grp
-                    from dfuview dv
-                        ,loc l
-                        ,skuconstraint sku
-                    where dv.loc = l.loc
-                      and l.loc_type = 3
-                      and dv.dmdgroup in ('ISS', 'CPU')
-                      and l.U_AREA='NA'
-                      and trim(l.postalcode )  is not null
-                      and trim(l.u_3digitzip ) is not null
-                      and sku.loc=dv.loc
-                      and sku.item=dv.dmdunit
-                      and sku.eff <= trim(sysdate)
-                      and sku.qty > 0
-                    group by dv.dmdunit, dv.loc
-                    ) demand_group
-
-            where dest.item = demand_group.item
-              and dest.loc = demand_group.loc
-              and dest.loc <> source_sku.loc
+                    ) source_sku
+            where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
               and ( ( u_equipment_type='FB'and source_sku.flatbed_status=1) 
                    or 
@@ -373,11 +365,14 @@ from sourcing src,
                     ** Allowed Destinations (GLID) Based on SKUCONSTRAINT
                     ** ( OR ACTUAL DEMAND) Sku, max _dist, max _src, Postal Code
                     ***********************************************************/
-                    (select distinct sku.item, i.u_materialcode matcode
-                           ,sku.loc, l.u_max_dist, l.u_max_src
-                           ,l.postalcode dest_pc
-                           ,l.u_equipment_type u_equipment_type
-                           ,l.u_3digitzip dest_geo
+                    (select distinct sku.item
+                                    ,i.u_materialcode matcode
+                                    ,sku.loc
+                                    ,l.u_max_dist
+                                    ,l.u_max_src
+                                    ,l.postalcode dest_pc
+                                    ,l.u_equipment_type u_equipment_type
+                                    ,l.u_3digitzip dest_geo
                     from skuconstraint sku
                         ,loc l
                         ,item i
@@ -388,35 +383,40 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= trim(sysdate)
+                      and sku.eff <= v_demand_start_date
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
-                    and not exists ( select '1' from udt_gidlimits_na gl 
-                                      where gl.loc  = sku.loc 
-                                        and gl.item = sku.item 
-                                        and gl.mandatory_loc is not null )  
+                    /* added by MAK - D not add extra unwanted lanes.*/
+                      and not exists ( select '1' from udt_gidlimits_na gl 
+                                        where gl.loc  = sku.loc 
+                                          and gl.item = sku.item 
+                                          and gl.mandatory_loc is not null )  
                     ) dest,
                     /***************************************************
                     ** Allowed Sources based on PRODUCITONYIELD (PLant).
                     ** sku, postalcode for the SOURCE SKU
                     ****************************************************/
-                    (select distinct p_yield.outputitem item
-                          ,p_yield.loc
+                    (select distinct i.item
+                          ,l.loc
                           ,l.postalcode source_pc
                           ,l.u_3digitzip source_geo
                           ,ps.status flatbed_status                        
-                    from productionyield p_yield
-                        ,item i
+                    from item i
                         ,loc l
+                        ,sku sku
                         ,udt_plant_status ps                              
-                    where p_yield.outputitem = i.item
-                    and i.u_stock = 'C' 
-                    and p_yield.loc = l.loc
-                    and l.U_AREA='NA'
+                    where l.loc=sku.loc
                     and l.loc_type = 2
-                    and trim(l.postalcode )  is not null
-                    and trim(l.u_3digitzip ) is not null
-                    and ps.loc=p_yield.loc
+                    and l.U_AREA='NA'
+                    and l.postalcode  is not null
+                    and l.u_3digitzip is not null
+                    and is_5digit(l.postalcode) = 1
+                    and is_3digit(l.postalcode) = 1
+                    and l.enablesw=1
+                    and i.item=sku.item
+                    and i.u_stock = 'C'
+                    and i.enablesw=1
+                    and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
                     union 
                     select sku.item
@@ -438,30 +438,8 @@ from sourcing src,
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
                       and ps.res= 'SOURCEFLATBED'
-                    ) source_sku,
-                    /* Get the sku and the max number of dfu groups */      
-                    (select distinct dv.dmdunit item
-                           ,dv.loc
-                           ,max(dv.u_dfu_grp) u_dfu_grp
-                    from dfuview dv
-                        ,loc l
-                        ,skuconstraint sku
-                    where dv.loc = l.loc
-                      and l.loc_type = 3
-                      and dv.dmdgroup in ('ISS', 'CPU')
-                      and l.U_AREA='NA'
-                      and trim(l.postalcode )  is not null
-                      and trim(l.u_3digitzip ) is not null
-                      and sku.loc=dv.loc
-                      and sku.item=dv.dmdunit
-                      and sku.eff <= trim(sysdate)
-                      and sku.qty > 0
-                    group by dv.dmdunit, dv.loc
-                    ) demand_group
-
-            where dest.item = demand_group.item
-              and dest.loc = demand_group.loc
-              and dest.loc <> source_sku.loc
+                    ) source_sku
+            where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
               and ( ( u_equipment_type='FB'and source_sku.flatbed_status=1) 
                    or 
@@ -590,7 +568,7 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= trim(sysdate)
+                      and sku.eff <= v_demand_start_date
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
                     /* added by MAK */
@@ -655,7 +633,7 @@ from sourcing src,
                       and trim(l.u_3digitzip ) is not null
                       and sku.loc=dv.loc
                       and sku.item=dv.dmdunit
-                      and sku.eff <= trim(sysdate)
+                      and sku.eff <= v_demand_start_date
                       and sku.qty > 0
                     group by dv.dmdunit, dv.loc
                     ) demand_group

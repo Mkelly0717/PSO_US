@@ -6,14 +6,15 @@ set define off;
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_10_SKU_BASE" as
 begin
 /******************************************************************
-** Part 1: create Items                                           * 
+** Part 1: Create Items                                           * 
 ******************************************************************/
 insert into igpmgr.intins_item 
 (integration_jobid, item, descr, uom, defaultuom, u_materialcode
     , u_qualitybatch, u_stock
 )
 select 'U_10_SKU_BASE_PART1' 
-    ,y.item, ' ' descr, ' ' uom, 18 defaultuom, substr(y.item, 1, 5) u_materialcode, substr(y.item, 5, 55) u_qualitybatch, 
+    ,y.item, ' ' descr, ' ' uom, 18 defaultuom, substr(y.item, 1, 5) u_materialcode
+    ,substr(y.item, 5, 55) u_qualitybatch, 
     case when substr(y.item, -2) = 'AR' then 'B'
             when substr(y.item, -2) = 'AI' then 'A' else 'C' end u_stock
 from item i, 
@@ -32,7 +33,8 @@ commit;
 
 
 /******************************************************************
-** Part 2: create SKU for service centers, TPM
+** Part 2: Create A stock items 4001AI 
+**         at PLANT LOCATION TYPES location types 2, 4, and 5)
 ******************************************************************/
 insert into igpmgr.intins_sku 
 (integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
@@ -42,56 +44,92 @@ insert into igpmgr.intins_sku
     , mpbatchnum, seqintenablesw, itemstoregrade, rpbatchnum
 )
 select 'U_10_SKU_BASE_PART2'
-   ,u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+   ,loc_item.item, loc_item.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
    ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom
    ,1 storablesw, 1 enablesw, 35 timeuom, ''  ff_trigger_control
    ,0 infcarryfwdsw, 1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup
    ,0 infinitesupplysw, 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade
    , 0 rpbatchnum
-from sku s, loc l, item i, 
-
-    (select distinct item, loc
-    from udt_yield
-    where maxcap > 0
-      and yield > 0
-    ) u
-where u.loc = l.loc
-and u.item = i.item
-and l.loc_type in ( 2, 4)
-and i.enablesw = 1
-and l.enablesw = 1
-and (
-      ( i.u_stock = 'C' 
-          and exists ( select 1
-                         from udt_plant_status ps
-                        where u.loc=ps.loc
-                          and ( ps.res like '%RUSOURCE' 
-                                 or 
-                                ps.res like '%RUDEST' 
-                               )
-                          and ps.status=1
-                     ) 
-       )
-     or 
-     ( i.u_stock in ('A', 'B') 
-         and exists ( select 1
-                        from udt_plant_status ps
-                       where ps.loc=u.loc
-                         and ps.res like 'REPAIR' 
-                         and ps.status=1
-                     )
-     )
-    )
-and u.item = s.item(+)
-and u.loc = s.loc(+)
-and s.item is null;
+from sku s,
+( select l.loc, i.item
+    from loc l, item i
+   where l.loc_type in ( 2, 4, 5)
+     and l.u_area='NA'
+     and i.enablesw = 1
+     and l.enablesw = 1
+     and i.u_stock in ('A')
+) loc_item  
+where s.item(+)=loc_item.item
+  and s.loc(+) = loc_item.loc
+  and s.item is null;
 
 commit;
 
 /******************************************************************
-** Part 3: temporary step to create SKU for MFG locationso
-** 08282015 - added other skus at mfg so can create production 
-**            methods to convert to RUNEW 
+** Part 3: Create B stock items 4001AR 
+**         at PLANT LOCATION TYPES location types 2, 4, and 5)
+*****************************************************************/
+insert into igpmgr.intins_sku 
+(integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw
+    ,minohcovrule, targetohcovrule, ltdgroup, infinitesupplysw
+    , mpbatchnum, seqintenablesw, itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART3'
+   ,loc_item.item, loc_item.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+   ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom
+   ,1 storablesw, 1 enablesw, 35 timeuom, ''  ff_trigger_control
+   ,0 infcarryfwdsw, 1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup
+   ,0 infinitesupplysw, 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade
+   , 0 rpbatchnum
+from sku s,
+( select l.loc, i.item
+    from loc l, item i
+   where l.loc_type in ( 2, 4, 5)
+     and l.u_area='NA'
+     and i.enablesw = 1
+     and l.enablesw = 1
+     and i.u_stock in ('B')
+) loc_item  
+where s.item(+)=loc_item.item
+  and s.loc(+) = loc_item.loc
+  and s.item is null;
+commit;
+
+
+/******************************************************************
+** Part 4: Create all RU SKUs (C Stock) at Storage Locations.
+******************************************************************/
+insert into igpmgr.intins_sku 
+(integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw, timeuom, ff_trigger_control, infcarryfwdsw, minohcovrule
+    ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum
+    ,seqintenablesw, itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART4'
+   ,i.item, l.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+   ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
+   ,1 enablesw, 35 timeuom, ''  ff_trigger_control, 0 infcarryfwdsw
+   ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
+   , 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
+from loc l, item i
+where l.loc_type = 5
+  and l.u_area='NA'
+  and i.u_stock='C'
+  and i.enablesw = 1
+  and l.enablesw = 1 
+  and not exists ( select 1
+                     from sku sku
+                    where sku.loc=l.loc
+                      and sku.item=i.item
+                  );
+
+commit;
+
+/******************************************************************
+** Part 5: Create SKU's for Manufacturing Locations(loc_type=5).
 ******************************************************************/
 insert into igpmgr.intins_sku 
 (integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
@@ -100,7 +138,7 @@ insert into igpmgr.intins_sku
     ,minohcovrule, targetohcovrule, ltdgroup, infinitesupplysw
     ,mpbatchnum, seqintenablesw, itemstoregrade, rpbatchnum
 )
-select 'U_10_SKU_BASE_PART3'
+select 'U_10_SKU_BASE_PART5'
   ,i.item , l.loc , 0 oh , 5 replentype , 1 netchgsw , v_init_eff_date ohpost
   ,-1 planlevel , ' ' sourcinggroup , 18 qtyuom , 15 currencyuom 
   ,1 storablesw , 1 enablesw , 35 timeuom , '' ff_trigger_control 
@@ -117,96 +155,17 @@ where i.item in ( '4055RUNEW'
     and l.loc_type = '1'
     and not exists
     ( select 1 from sku sku where sku.loc=l.loc and sku.item=i.item
-    ); -- 0827 Changed from max src check. 
---and l.u_max_src = 1;  --need identfier 
+    ); 
 
 commit;
 
---SKU for potential parent items from a substitution production method, (SKU not an output of INS or REP PM from above must be created) 
 
---insert into sku (item, loc, oh,   replentype,   netchgsw,  ohpost,  planlevel,  sourcinggroup, qtyuom, currencyuom,  storablesw,     
---    enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw,  minohcovrule, targetohcovrule,  ltdgroup,     infinitesupplysw,     mpbatchnum,     seqintenablesw,     
---    itemstoregrade,     rpbatchnum)
---
---select u.item, u.loc, 0 oh,     5 replentype,     1 netchgsw,     to_date('01/01/1970', 'MM/DD/YYYY') ohpost,     -1 planlevel,     ' ' sourcinggroup,     18 qtyuom,    15 currencyuom,     1 storablesw,     
---    1 enablesw,     35 timeuom,    ''  ff_trigger_control,     0 infcarryfwdsw,     1 minohcovrule,     1 targetohcovrule,     ' ' ltdgroup,     0 infinitesupplysw,     0 mpbatchnum,     0 seqintenablesw,     
---    -1 itemstoregrade,     0 rpbatchnum
---from
---    (select distinct u.parent item, u.loc
---    from sku s, loc l, 
---
---        (select y.loc, y.item, s.subord, y.matcode||s.parent parent
---        from udt_yield y, udt_substitute s, item i, item ip
---        where y.item = i.item 
---        and i.u_qualitybatch = s.subord
---        and y.matcode||s.parent = ip.item 
---        ) u
---
---    where u.loc = l.loc
---    and l.loc_type = 2
---    and u.parent = s.item(+)
---    and u.loc = s.loc(+)
---    and s.loc is null
---    ) u;
---    
---commit;
-
---create SKU for u_defplant for aggregate GID locations (u_dfu_grp = 1) if it does not exist  
---u_26_prd_defplant creates placeholder productionmethods 
--- or create EU99 for unmatched sourcing within u_max_dist where u_dfu_grp = 0
-
---insert into sku (item, loc, oh,   replentype,   netchgsw,  ohpost,  planlevel,  sourcinggroup, qtyuom, currencyuom,  storablesw,     
---    enablesw,   timeuom,  ff_trigger_control, infcarryfwdsw,  minohcovrule, targetohcovrule,  ltdgroup,     infinitesupplysw,     mpbatchnum,     seqintenablesw,     
---    itemstoregrade,     rpbatchnum)
---
---select u.item, u.loc, 0 oh,     5 replentype,     1 netchgsw,     to_date('01/01/1970', 'MM/DD/YYYY') ohpost,     -1 planlevel,     ' ' sourcinggroup,     18 qtyuom,    15 currencyuom,     1 storablesw,     
---    1 enablesw,     35 timeuom,    ''  ff_trigger_control,     0 infcarryfwdsw,     1 minohcovrule,     1 targetohcovrule,     ' ' ltdgroup,     0 infinitesupplysw,     0 mpbatchnum,     0 seqintenablesw,     
---    -1 itemstoregrade,     0 rpbatchnum
---from 
---    (select distinct v.item, v.u_defplant loc
---    from sku s, loc l, item i,
---
---        (select distinct v.dmdunit item, v.loc dest, v.u_defplant, v.u_dfu_grp
---                from dfuview v, loc l, item i
---        where l.loc = v.loc
---        and l.loc_type = 3 
---        and v.u_dfu_grp = 1
---        and v.dmdunit = i.item
---        and v.u_defplant <> ' '
---        and v.dmdgroup in ('ISS', 'CPU', 'COL', 'RET')
---        ) v
---            
---    where v.u_defplant = l.loc
---    --and l.loc_type in (1, 2)  --allowed loc_type 6 for DEF PM - temporary until corrected 
---    and v.item = i.item
---    and i.u_stock in ('A', 'C')
---    and v.item = s.item(+) 
---    and v.u_defplant = s.loc(+)
---    and s.item is null
---    
---    union 
---    
---    select u.item, u.loc
---    from sku s,
---    
---        (select i.item, l.loc
---        from item i, loc l, sku s
---        where u_stock in ('A', 'C')
---        and l.loc = 'EU99'
---        ) u
---        
---    where u.item = s.item(+)
---    and u.loc = s.loc(+)
---    and s.item is null        
---    ) u;
---    
---commit;
 
 /******************************************************************
-** Part 4: SKU for AI at service centers; if an RU exists at SC 
-**         then an AI should as well RU could be created at service 
-**         from udt_yield or dfuview def_plant AR SKU should be 
-**         created if percenrepair > 0 
+** Part 6: Create RU (C Stock) SKUS at type 2 and 4 service centers
+**         where udt_yield maxcap and yield are > 0 
+**         and udt_plant_status is 1 for sort or repair
+**         or heat treat respectively.
 ******************************************************************/
 insert into igpmgr.intins_sku 
 (integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
@@ -215,40 +174,48 @@ insert into igpmgr.intins_sku
     ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum
     ,seqintenablesw, itemstoregrade, rpbatchnum
 )
-select 'U_10_SKU_BASE_PART4'
-   ,u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+select distinct 'U_10_SKU_BASE_PART6'
+   ,i.item, l.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
    ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
    ,1 enablesw, 35 timeuom, ''  ff_trigger_control, 0 infcarryfwdsw
    ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
    , 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
-from sku s, loc l, item i, 
-
-    (select distinct '4001AI' item, loc 
-    from udt_yield
-    
-    union
-    
-    select distinct matcode||'AR' item, loc
-    from udt_yield
-    where productionmethod = 'REP'
-      and maxcap > 0                      -- Added by MAK
-      and yield > 0                       -- Added by MAK
-    ) u
-    
-where u.loc = l.loc
-and u.item = i.item
-and l.loc_type in (2, 4)
-and i.enablesw = 1
-and l.enablesw = 1 
-and u.item = s.item(+)
-and u.loc = s.loc(+)
-and s.item is null;
+from loc l, item i, udt_yield yield
+where l.loc_type in (2, 4)
+  and l.u_area='NA'
+  and i.u_stock='C'
+  and i.enablesw = 1
+  and l.enablesw = 1 
+  and not exists ( select 1
+                     from sku sku
+                    where sku.loc=l.loc
+                      and sku.item=i.item
+                  )
+  and yield.loc=l.loc
+  and yield.item=i.item
+  and yield.maxcap > 0
+  and yield.yield > 0
+  and exists ( select 1
+                 from udt_plant_status ps
+                where ps.loc=yield.loc
+                  and ps.status=1
+                  and (   (yield.productionmethod='INS' and ps.res='SORT')
+                       or 
+                          (yield.productionmethod='REP' and ps.res='REPAIR'
+                           )
+                       or
+                          (yield.productionmethod='HTR' and ps.res='HEATTREAT')
+                      )
+              );
 
 commit;
 
+
 /******************************************************************
-** Part 5: loc_type 3 SKU for NA ==> Infinit Carry Switch to 0 
-**         for WEEEKLY VERSION
+** Part 7: Create A and C stock SKUS for Cusomers loc_type 3 
+**         which have a forecast for AI and/or RU within the 
+**         FCST period.
+**         ==> Infinit Carry Switch to 0  for WEEEKLY VERSION
 ******************************************************************/
 insert into igpmgr.intins_sku 
 ( integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
@@ -257,7 +224,7 @@ insert into igpmgr.intins_sku
     ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum, seqintenablesw
     ,itemstoregrade, rpbatchnum
 )
-select 'U_10_SKU_BASE_PART5'
+select 'U_10_SKU_BASE_PART7'
     , u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
     ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
     ,1 enablesw, 35 timeuom, ''  ff_trigger_control, u.infcarryfwdsw
@@ -271,66 +238,134 @@ from
         (select  distinct f.dmdunit item, f.loc, 
             0 infcarryfwdsw
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
-        from fcst f, loc l, item i, dfuview v
-        where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
-        and f.loc = l.loc  
+        from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
+        where f.startdate 
+                between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
+                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
+                        + phdays.numval1
+        and l.u_area = 'NA'
+        and l.loc_type = 3 
+        and l.enablesw = 1 
+        and i.u_stock in ('A', 'C')
+        and i.enablesw = 1
         and f.dmdunit = i.item 
         and f.dmdgroup in ('ISS', 'COL')
-        and i.u_stock in ('A', 'C')
-        and l.loc_type = 3 
+        and f.loc = l.loc  
+        and f.qty > 0
         and f.dmdunit = v.dmdunit
         and f.dmdgroup = v.dmdgroup
         and f.loc = v.loc
         and v.u_dfulevel = 0
-        and l.u_area = 'NA'
+        and phdays.name='PLAN_HORIZON_DAYS'
         ) f
         
     where f.item = s.item(+)
     and f.loc = s.loc(+)
     and s.item is null
 ) u;
-
 commit;
 
 
+/******************************************************************
+** Part 8: Create all items with a fcst 
+**               at tpm locations ( loc_type=4)
+**         ==> Infinit Carry Switch to 0  for WEEEKLY VERSION
+******************************************************************/
+insert into igpmgr.intins_sku 
+( integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw, timeuom, ff_trigger_control, infcarryfwdsw, minohcovrule
+    ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum, seqintenablesw
+    ,itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART8'
+    , u.item, u.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+    ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
+    ,1 enablesw, 35 timeuom, ''  ff_trigger_control, u.infcarryfwdsw
+    ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
+    ,0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
+from 
 
---once above sku are created now dts records can be created -- 
+    (select f.item, f.loc, f.infcarryfwdsw
+    from sku s, 
 
---insert into dfutosku (dmdunit, dmdgroup, dfuloc, item, skuloc, allocfactor, convfactor, eff, disc,
---    fcsttype, histtype, model, supersedesw, ff_trigger_control)
---
---    (select f.dmdunit, f.dmdgroup, f.loc dfuloc, f.item, f.skuloc, 1 allocfactor, 1 convfactor, to_date('01/01/1970', 'MM/DD/YYYY') eff, to_date('01/01/1970', 'MM/DD/YYYY') disc,
---        1 fcsttype, 1 histtype, f.model, 0 supersedesw, '' ff_trigger_control 
---    from dfutosku d,
---
---        (select s.item, s.loc skuloc, f.dmdunit, f.dmdgroup, f.model , f.loc
---        from sku s,
---
---            (select distinct f.dmdunit item, f.loc, f.dmdunit, f.dmdgroup, f.model
---            from fcst f, loc l
---            where f.loc = l.loc 
---            and l.loc_type = 3
---            ) f
---
---        where f.item = s.item
---        and f.loc = s.loc
---        ) f
---
---        where f.dmdunit = d.dmdunit(+)
---        and f.dmdgroup = d.dmdgroup(+)
---        and f.loc = d.dfuloc(+)
---        and f.item = d.item(+)
---        and f.skuloc = d.skuloc(+)
---        and f.model = d.model(+)
---        and d.item is null
---    );
---
---commit;
-
---rather than running transfer forecast could use below insert statement....
+        (select  distinct f.dmdunit item, f.loc, 
+            0 infcarryfwdsw
+--           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
+        from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
+        where f.startdate 
+                between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
+                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
+                        + phdays.numval1
+        and l.u_area = 'NA'
+        and l.loc_type in (2,4,5)
+        and l.enablesw = 1 
+        and i.u_stock in ('A', 'B', 'C')
+        and i.enablesw = 1
+        and f.dmdunit = i.item 
+        and f.loc = l.loc  
+        and f.qty > 0
+        and f.dmdunit = v.dmdunit
+        and f.fmdgroup like ('%TPM%')
+        and f.dmdgroup = v.dmdgroup
+        and f.loc = v.loc
+        and v.u_dfulevel = 0
+        and phdays.name='PLAN_HORIZON_DAYS'
+        ) f
+        
+    where f.item = s.item(+)
+    and f.loc = s.loc(+)
+    and s.item is null
+) u;
+commit;
 
 /******************************************************************
-** Part 6: truncate and re-create dfutoskufcst 
+** Part 9: Create all SKU's at location with ARSOURCE/ARDEST (C stock)
+**         and/or having RUSOURCE/RUDEST for that Stock type (B stock)
+******************************************************************/
+insert into igpmgr.intins_sku 
+( integration_jobid, item, loc, oh, replentype, netchgsw, ohpost
+    ,planlevel, sourcinggroup, qtyuom, currencyuom, storablesw
+    ,enablesw, timeuom, ff_trigger_control, infcarryfwdsw, minohcovrule
+    ,targetohcovrule, ltdgroup, infinitesupplysw, mpbatchnum, seqintenablesw
+    ,itemstoregrade, rpbatchnum
+)
+select 'U_10_SKU_BASE_PART9'
+    , i.item, l.loc, 0 oh, 5 replentype, 1 netchgsw, v_init_eff_date ohpost
+    ,-1 planlevel, ' ' sourcinggroup, 18 qtyuom, 15 currencyuom, 1 storablesw
+    ,1 enablesw, 35 timeuom, ''  ff_trigger_control, 0 infcarryfwdsw
+    ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
+    ,0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
+from udt_plant_status ps, loc l, item i
+where ps.status=1
+  and l.loc=ps.loc
+  and l.u_area='NA'
+  and l.loc_type in (2,4,5)
+  and l.enablesw=1
+  and i.u_stock in ('B','C')
+  and i.enablesw=1
+  and ( ( ps.u_stock = 'C' and i.u_stock='C'
+           and (  ps.res like ('%RUSOURCE') 
+               or ps.res like ('%RUDEST') 
+                )
+        )
+        or 
+        (
+           ps.u_stock = 'B' and i.u_stock='B'
+              and (   ps.res like ('%ARSOURCE') 
+                   or ps.res like ('%ARDEST') 
+                   )
+         ) 
+       )
+ and not exists ( select 1
+                    from sku sku
+                   where sku.loc=l.loc
+                     and sku.item=i.item
+                 );
+commit;
+
+/******************************************************************
+** Part 10: truncate and re-create dfutoskufcst 
 ******************************************************************/
 execute immediate 'truncate table dfutoskufcst';
 
@@ -338,20 +373,23 @@ insert into igpmgr.intins_dfutoskufcst
 ( integration_jobid, dmdunit, item, dmdgroup, dfuloc, skuloc
     ,startdate, dur, type, supersedesw, ff_trigger_control, totfcst
 )
-select distinct 'U_10_SKU_BASE_PART6'
+select distinct 'U_10_SKU_BASE_PART10'
         ,f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate
         ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v
-    where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
+    from fcst f, dfuview v, udt_default_parameters phdays
+    where f.startdate between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
+                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
+                        + phdays.numval1
     and f.dmdgroup in ('ISS', 'COL')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
     and f.loc = v.loc
     and v.u_dfulevel = 0
     and f.dmdunit <> '4055RUNEW'
+    and phdays.name='PLAN_HORIZON_DAYS'
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
     ) f
         
@@ -359,15 +397,17 @@ where f.item = s.item
 and f.skuloc = s.loc
 and f.item = i.item
 and i.u_stock in ('A', 'C')
+and i.enable=1
 and f.skuloc = l.loc
 and l.loc_type = 3
-and l.u_area = 'NA';
+and l.u_area = 'NA'
+and l.enablesw=1;
 
 commit;
 
 
 /******************************************************************
-** Part 7: create forecast records for RUNEW only where permitted
+** Part 11: create forecast records for RUNEW only where permitted
 **         ,LOC:U_RUNEW_CUST = 1 truncate and re-create dfutoskufcst 
 ******************************************************************/
 insert into igpmgr.intins_dfutoskufcst 
@@ -375,14 +415,16 @@ insert into igpmgr.intins_dfutoskufcst
     ,dur, type , supersedesw, ff_trigger_control, totfcst
 )
  
-select distinct 'U_10_SKU_BASE_PART7'
+select distinct 'U_10_SKU_BASE_PART11'
     ,f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate
     ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i,  
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v, loc l
-    where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
+    from fcst f, dfuview v, loc l, udt_default_parameters phdays
+    where f.startdate between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
+                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
+                        + phdays.numval1   
     and f.dmdgroup in ('ISS')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
@@ -393,6 +435,7 @@ from sku s, item i,
     and f.dmdunit = '4055RUNEW'
     and l.loc_type = 3
     and l.u_area = 'NA'
+    and phdays.name='PLAN_HORIZON_DAYS'
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
     ) f
         
@@ -404,7 +447,7 @@ and i.u_stock in ('C');
 commit;
 
 /******************************************************************
-** Part 8: create forecast records at LOC_TYPE 2 locations for 
+** Part 12: create forecast records at LOC_TYPE 2 locations for 
 **         supply of TPM; A, B and C stock are all supply 
 **        (CAT10 SKU constraints) 
 ******************************************************************/
@@ -412,7 +455,7 @@ insert into igpmgr.intins_dfutoskufcst
 ( integration_jobid, dmdunit, item, dmdgroup, dfuloc, skuloc
     ,startdate, dur, type, supersedesw, ff_trigger_control, totfcst
 )
-select distinct 'U_10_SKU_BASE_PART8'
+select distinct 'U_10_SKU_BASE_PART12'
     ,f.dmdunit, f.item, f.dmdgroup, f.dfuloc, f.skuloc, f.startdate
     ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
@@ -420,14 +463,17 @@ from sku s, item i, loc l,
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc
               ,f.loc skuloc , startdate, dur, 1 type, 0 supersedesw
               ,''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v
-    where f.startdate between to_date('07/05/2015', 'MM/DD/YYYY') and to_date('01/03/2016', 'MM/DD/YYYY')   
+    from fcst f, dfuview v, udt_default_parameters phdays
+    where f.startdate between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
+                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
+                        + phdays.numval1      
     and f.dmdgroup in ('TPM')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
     and f.loc = v.loc
     and v.u_dfulevel = 0
     and f.dmdunit <> '4055RUNEW'
+    and phdays.name='PLAN_HORIZON_DAYS'
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
     ) f
         
@@ -435,21 +481,23 @@ where f.item = s.item
 and f.skuloc = s.loc
 and f.item = i.item
 and i.u_stock in ('A', 'B', 'C')
+and i.enablesw=1
 and f.skuloc = l.loc
 and l.loc_type in (2, 4)
-and l.u_area = 'NA';
+and l.u_area = 'NA'
+and l.enablesw=1;
 
 commit;
 
 /******************************************************************
-** Part 9: Create Cal Records
+** Part 13: Create Cal Records
 ******************************************************************/
 insert into igpmgr.intins_cal 
 ( 
    integration_jobid, cal, descr, type, master, numfcstper, rollingsw
 )
 
-select 'U_10_SKU_BASE_PART9'
+select 'U_10_SKU_BASE_PART13'
         ,s.loc||'_'||s.item cal, 'Allocation Calendar' descr
         ,7 type, ' ' master, 0 numfcstper, 0 rollingsw 
 from sku s,
@@ -467,15 +515,16 @@ and c.item is null;
 commit;
 
 /******************************************************************
-** Part 10: Create Caldata Records
+** Part 14: Create Caldata Records
 ******************************************************************/
 insert into igpmgr.intins_caldata
 (
   integration_jobid, cal, altcal, eff, opt, repeat, avail, descr
    ,perwgt, allocwgt, covdur
 )
-select 'U_10_SKU_BASE_PART10'
-       ,c.cal, ' ' altcal, 23319360 eff, 6 opt, 0 repeat, 0 avail
+select 'U_10_SKU_BASE_PART14'
+       ,c.cal, ' ' altcal, v_date_to_eff(trunc(systimestamp at time zone 'GMT')) eff
+       , 6 opt, 0 repeat, 0 avail
        ,'Allocation Calendar' descr, 0 perwgt, 1/7 allocwgt, 0 covdur 
 from cal c, caldata cd, sku s
 where substr(c.cal, 1, instr(c.cal, '_')-1) = s.loc
@@ -487,7 +536,7 @@ and cd.cal is null;
 commit;
 
 /******************************************************************
-** Part 11: Create the SKU demand paramters 
+** Part 15: Create the SKU demand paramters 
 ******************************************************************/
 insert into igpmgr.intins_skudemandparam 
 ( 
@@ -498,7 +547,7 @@ insert into igpmgr.intins_skudemandparam
      ,ff_trigger_control, fcstconsumptionrule, fcstprimconsdur
      ,fcstsecconsdur, proratebytypesw, alloccalgroup, mastercal, weeklyavghist
 )
-select 'U_10_SKU_BASE_PART11'
+select 'U_10_SKU_BASE_PART15'
        ,s.item, s.loc, 
     case when l.loc_type = 3 then 1440*1 else 1440*365 end custorderdur, 0 dmdtodate,     
     case when l.loc_type = 3 then 6 else 2 end fcstadjrule, 
@@ -517,7 +566,7 @@ and p.item is null;
 
 commit;
 /******************************************************************
-** Part 12: SKU deployment paramters
+** Part 16: SKU deployment paramters
 ******************************************************************/
 insert into igpmgr.intins_skudeployparam 
 (
@@ -530,7 +579,7 @@ insert into igpmgr.intins_skudeployparam
   ,holdbackqty, maxbucketdur, skupriority, secrsallocrule
   ,recshipdur, sourcessrule
 )
-select 'U_10_SKU_BASE_PART12'
+select 'U_10_SKU_BASE_PART16'
        ,s.item, s.loc, ' ' allocstratid, 0 constrrecshipsw, 1 locpriority
        ,0 minallocdur, 0 pushopt, 1 recshippushopt, 1 recshipsupplyrule
        ,1 rsallocrule, 0 stockavaildur, 0 dyndepldur, 0 incstkoutcost
@@ -547,7 +596,7 @@ and p.item is null;
 
 commit;
 /******************************************************************
-** Part 13: SKU planning Param
+** Part 17: SKU planning Param
 ******************************************************************/
 insert into igpmgr.intins_skuplannparam 
 (
@@ -570,7 +619,7 @@ insert into igpmgr.intins_skuplannparam
     ,limitplanarrivpublishsw, limitplanarrivpublishdur, maxohrule
 )
 
-select 'U_10_SKU_BASE_PART13'
+select 'U_10_SKU_BASE_PART17'
     ,s.item, s.loc, 0 atpdur, 3 depdmdopt, 0 externalskusw
     ,v_init_eff_date firstreplendate, v_init_eff_date lastfrzstart
     ,v_init_eff_date lastplanstart, 524160 plandur, 0 planleadtime
@@ -583,7 +632,7 @@ select 'U_10_SKU_BASE_PART13'
     ,1 incdrpqty, 0 mindrpqty, 10080 mpscovdur, 0 mfgfrzdur, 1 mpsrule
     ,v_init_eff_date mpstimefencedate, 0 mpstimefencedur, 1 incmpsqty
     ,0 minmpsqty, 0 shrinkagefactor, v_init_eff_date expdate, 1 atprule
-    ,' ' prodcal, TO_DATE('01/01/1970', 'MM/DD/YYYY') prodstartdate
+    ,' ' prodcal, v_init_eff_date prodstartdate
     ,v_init_eff_date prodstopdate, 1 orderingcost, 1 holdingcost
     ,1 eoq, ''  ff_trigger_control, ' ' workingcal, 0 lookaheaddur
     ,2 orderpointrule, 0 orderskudetailsw, 1048320 supsdmindmdcovdur
@@ -601,7 +650,7 @@ and p.item is null;
 
 commit;
 /******************************************************************
-** Part 14: SKU safteystock parameters
+** Part 18: SKU safteystock parameters
 ******************************************************************/
 
 insert into igpmgr.intins_skussparam 
@@ -619,7 +668,7 @@ insert into igpmgr.intins_skussparam
     ,shiplag, orderlag, orderpostdate, orderdatadur, allowearlyarrivsw
     ,allowearlyordersw, csltemplate
 )
-select 'U_10_SKU_BASE_PART14'
+select 'U_10_SKU_BASE_PART18'
     ,s.item, s.loc, 0 avgleadtime, 0 avgnumlines, 0 leadtimesd
     ,999999999 maxss, 0 minss, 1 mfgleadtimerule, 0 mselag, 0 mseper
     ,0 netfcstmsesmconst, 12 numreplenyr, 1 statssadjopt, 0 sscov
@@ -644,7 +693,7 @@ and p.item is null;
 commit;
 
 /******************************************************************
-** Part 15: Update OnHand Post
+** Part 19: Update OnHand Post
 ******************************************************************/
 update sku set ohpost = (select min(startdate) from dfutoskufcst);
 

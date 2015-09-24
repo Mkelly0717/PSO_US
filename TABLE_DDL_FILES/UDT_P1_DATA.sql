@@ -3,7 +3,7 @@
 --------------------------------------------------------
 
   CREATE TABLE "SCPOMGR"."UDT_P1_DATA" 
-   (	"DATE" DATE, 
+   (	"RDATE" DATE, 
 	"SM_RANK" NUMBER, 
 	"LS_PRIORITY" NUMBER, 
 	"CT_RANK" NUMBER, 
