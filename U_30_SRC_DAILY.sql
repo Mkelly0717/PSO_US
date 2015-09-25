@@ -183,7 +183,7 @@ from sourcing src,
                     from skuconstraint sku
                         ,loc l
                         ,item i
-                    where sku.category = 1
+                    where sku.category in (1,6)
                       and sku.loc = l.loc
                       and l.loc_type = 3
                       and l.U_AREA='NA'
@@ -258,7 +258,7 @@ from sourcing src,
         and lane_cost.direction    = ' '
         and lanes.dest_pc          = lane_cost.dest_pc
         and lanes.source_pc        = lane_cost.source_pc
-        and lanes.u_max_dist      <= lane_cost.distance
+        and lanes.u_max_dist      >= lane_cost.distance
         ) all_lanes
     ) ranked_lanes
 /*******************************************************************************
@@ -451,7 +451,7 @@ from sourcing src,
         and lane_cost.direction     = ' '
         and lanes.dest_geo          = lane_cost.dest_geo
         and lanes.source_geo        = lane_cost.source_geo
-        and lanes.u_max_dist       <= lane_cost.distance
+        and lanes.u_max_dist       >= lane_cost.distance
         ) all_lanes
     ) ranked_lanes
 /*******************************************************************************

@@ -240,9 +240,7 @@ from
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
         from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
         where f.startdate 
-                between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
-                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
-                        + phdays.numval1
+                between v_demand_start_date and v_demand_start_date + phdays.numval1
         and l.u_area = 'NA'
         and l.loc_type = 3 
         and l.enablesw = 1 
@@ -294,9 +292,7 @@ from
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
         from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
         where f.startdate 
-                between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
-                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
-                        + phdays.numval1
+                between v_demand_start_date and v_demand_start_date + phdays.numval1
         and l.u_area = 'NA'
         and l.loc_type in (2,4,5)
         and l.enablesw = 1 
@@ -380,9 +376,8 @@ from sku s, item i, loc l,
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v, udt_default_parameters phdays
-    where f.startdate between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
-                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
-                        + phdays.numval1
+    where f.startdate
+                between v_demand_start_date and v_demand_start_date + phdays.numval1
     and f.dmdgroup in ('ISS', 'COL')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
@@ -422,9 +417,7 @@ from sku s, item i,
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v, loc l, udt_default_parameters phdays
-    where f.startdate between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
-                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
-                        + phdays.numval1   
+    where f.startdate between v_demand_start_date and v_demand_start_date + phdays.numval1
     and f.dmdgroup in ('ISS')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
@@ -464,9 +457,7 @@ from sku s, item i, loc l,
               ,f.loc skuloc , startdate, dur, 1 type, 0 supersedesw
               ,''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v, udt_default_parameters phdays
-    where f.startdate between next_day(systimestamp at time zone 'GMT' - 7,'SUN') 
-                    and next_day(systimestamp at time zone 'GMT' - 7,'SUN')
-                        + phdays.numval1      
+    where f.startdate between v_demand_start_date and v_demand_start_date + phdays.numval1
     and f.dmdgroup in ('TPM')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
@@ -523,7 +514,7 @@ insert into igpmgr.intins_caldata
    ,perwgt, allocwgt, covdur
 )
 select 'U_10_SKU_BASE_PART14'
-       ,c.cal, ' ' altcal, v_date_to_eff(trunc(systimestamp at time zone 'GMT')) eff
+       ,c.cal, ' ' altcal, v_date_to_eff(v_demand_start_date) eff
        , 6 opt, 0 repeat, 0 avail
        ,'Allocation Calendar' descr, 0 perwgt, 1/7 allocwgt, 0 covdur 
 from cal c, caldata cd, sku s
