@@ -4,9 +4,10 @@
 /* U_30_SRC_DAILY_PART1:  TPM(4) to SC(2), ST(5) 
    U_30_SRC_DAILY_PART2:  TPM(4),SC(2),or ST(5) to GLID (3) ==> 5 digit lanes
    U_30_SRC_DAILY_PART2b: TPM(4),SC(2),or ST(5) to GLID (3) ==> 3 digit lanes
-   U_30_SRC_DAILY_PART3:  
-   U_30_SRC_DAILY_PART4:
-   U_30_SRC_DAILY_PART5:
+   U_30_SRC_DAILY_PART3:  Find Closest 5zip Lane over max Dist  
+   U_30_SRC_DAILY_PART3B: Find Closest 3zip Lane over max Dist
+   U_30_SRC_DAILY_PART4:  Create RU SKU'S at the MFG Locaitons
+   U_30_SRC_DAILY_PART5:  Allow sourcing from MFG if substitution is allowed.
    U_30_SRC_DAILY_PART6:
 */
 set define off;
@@ -103,7 +104,7 @@ select distinct 'U_30_SRC_DAILY_PART2'
       ,ranked_lanes.item, ranked_lanes.dest,ranked_lanes.source
       ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
       ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
-      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC' sourcing, v_init_eff_date disc
+      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC-5ZIP' sourcing, v_init_eff_date disc
       , 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw
       ,100 yieldfactor, 0 supplyleadtime, 100 costpercentage
       ,0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal
@@ -296,7 +297,7 @@ select distinct 'U_30_SRC_DAILY_PART2B'
       ,ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
       ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
       ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
-      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC' sourcing, v_init_eff_date disc
+      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC-3ZIP' sourcing, v_init_eff_date disc
       ,1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw
       ,100 yieldfactor, 0 supplyleadtime, 100 costpercentage
       ,0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal
@@ -496,7 +497,7 @@ select distinct 'U_30_SRC_DAILY_PART3'
       ,ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
       ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
       ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
-      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC' sourcing, v_init_eff_date disc
+      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC-5EXT' sourcing, v_init_eff_date disc
       ,1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw
       ,100 yieldfactor, 0 supplyleadtime, 100 costpercentage
       ,0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal
@@ -506,7 +507,10 @@ select distinct 'U_30_SRC_DAILY_PART3'
       ,' ' ordergroup, ' ' ordergroupmember, 0 lotsizesenabledsw
       ,0 convenientadjdownpct
 from sourcing src, 
-     /* Ranked Lanes Piece: Source Item, dest, dest_pc, source, source_pc, max_dist, max_src, distance, rownum */
+     /******************************************************************** 
+     ** Ranked Lanes Piece: Source Item, dest, dest_pc, source, source_pc
+     ** ,max_dist, max_src, distance, rownum 
+     *********************************************************************/
     (select all_lanes.item, all_lanes.dest, all_lanes.dest_pc, all_lanes.source
            ,all_lanes.source_pc, all_lanes.u_max_dist, all_lanes.u_max_src
            ,all_lanes.distance, row_number()
@@ -514,7 +518,10 @@ from sourcing src,
                        order by cost_pallet, source asc
                      ) as rank
     from  
-    /* Geting All Lanes: item, dest, dest_pc, source, source_pc max_dist, max_src, dist and  cost(999 if null) */
+    /*********************************************************************
+    ** Getting All Lanes: item, dest, dest_pc, source, source_pc max_dist
+    ** ,max_src, dist and  cost(999 if null) 
+    **********************************************************************/
     (select /*+ use_hash(lane_cost, lanes) parallel (lane_cost,4) parallel (lanes,4) */
             lanes.item, lanes.dest, lanes.dest_pc, lanes.source, lanes.source_pc
             ,lanes.u_max_dist, lanes.u_max_src, lane_cost.distance
@@ -535,10 +542,12 @@ from sourcing src,
              order by direction, u_equipment_type, source_pc
                      ,dest_pc, source_geo, dest_geo
             )  lane_cost, 
-             /* Lanes based on matching the source for producitonyield and dest for sku constraint. 
-                 dest sku, max_dist, max_src, dest_pc , source, source_pc 
-             */            
-            (select /*+ use_hash(dest, source_sku, demand_group) parallel (dest,4)parallel (sku_source,4 ) */
+          /***************************************************************
+             ** Lanes based on matching the source for producitonyield and 
+             ** dest for sku constraint. dest sku, max_dist, max_src, dest_pc
+             ** ,source, source_pc 
+             *****************************************************************/            
+               (select /*+ use_hash(dest, source_sku, demand_group) parallel (dest,4)parallel (sku_source,4 ) */
                     ' ' direction
                    ,dest.item
                    ,dest.loc dest
@@ -554,14 +563,22 @@ from sourcing src,
                     end u_equipment_type
             
             from
-                    /* Allowed Destinations (GLID) Based on SKUCONSTRAINT ( OR ACTUAL DEMAND)
-                       Sku, max _dist, max _src, Postal Code
-                    */
-                    (select distinct sku.item, i.u_materialcode matcode
-                           ,sku.loc, l.u_max_dist, l.u_max_src, l.postalcode dest_pc
-                           ,l.u_equipment_type u_equipment_type, l.u_3digitzip dest_geo
-                    from skuconstraint sku, loc l, item i
-                    where sku.category = 1
+                 /**********************************************************
+                 ** Allowed Destinations (GLID) Based on SKUCONSTRAINT 
+                 ** ( OR ACTUAL DEMAND) Sku, max _dist, max _src, Postal Code
+                 ***********************************************************/
+                 (select distinct sku.item
+                                    ,i.u_materialcode matcode
+                                    ,sku.loc
+                                    ,l.u_max_dist
+                                    ,l.u_max_src
+                                    ,l.postalcode dest_pc
+                                    ,l.u_equipment_type u_equipment_type
+                                    ,l.u_3digitzip dest_geo
+                    from skuconstraint sku
+                        ,loc l
+                        ,item i
+                       where sku.category in (1,6)
                       and sku.loc = l.loc
                       and l.loc_type = 3
                       and l.U_AREA='NA'
@@ -581,23 +598,27 @@ from sourcing src,
                        sku, postalcode 
                        for the SOURCE SKU
                     */
-                    (select distinct p_yield.outputitem item
-                          ,p_yield.loc
+                    (select distinct i.item
+                          ,l.loc
                           ,l.postalcode source_pc
                           ,l.u_3digitzip source_geo
                           ,ps.status flatbed_status                        
-                    from productionyield p_yield
-                        ,item i
+                    from item i
                         ,loc l
+                        ,sku sku
                         ,udt_plant_status ps                              
-                    where p_yield.outputitem = i.item
-                    and i.u_stock = 'C' 
-                    and p_yield.loc = l.loc
+                    where l.loc=sku.loc
+                    and l.loc_type in (2,4,5)
                     and l.U_AREA='NA'
-                    and l.loc_type = 2
-                    and trim(l.postalcode )  is not null
-                    and trim(l.u_3digitzip ) is not null
-                    and ps.loc=p_yield.loc
+                    and l.postalcode  is not null
+                    and l.u_3digitzip is not null
+                    and is_5digit(l.postalcode) = 1
+                    and is_3digit(l.postalcode) = 1
+                    and l.enablesw=1
+                    and i.item=sku.item
+                    and i.u_stock = 'C'
+                    and i.enablesw=1
+                    and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
                     union 
                     select sku.item
@@ -609,7 +630,7 @@ from sourcing src,
                         ,loc l1
                         ,item i1
                         ,udt_plant_status ps       
-                    where l1.loc_type = 2
+                    where l1.loc_type in (2,4,5)
                       and i1.u_stock='C'
                       and sku.item=i1.item
                       and sku.oh > 0
@@ -619,28 +640,203 @@ from sourcing src,
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
                       and ps.res= 'SOURCEFLATBED'
-                    ) source_sku,
-                    /* Get the sku and the max number of dfu groups */      
-                    (select distinct dv.dmdunit item, dv.loc, max(dv.u_dfu_grp) u_dfu_grp
-                    from dfuview dv
-                        ,loc l
-                        ,skuconstraint sku
-                    where dv.loc = l.loc
-                      and l.loc_type = 3
-                      and dv.dmdgroup in ('ISS', 'CPU')
-                      and l.U_AREA='NA'
-                      and trim(l.postalcode )  is not null
-                      and trim(l.u_3digitzip ) is not null
-                      and sku.loc=dv.loc
-                      and sku.item=dv.dmdunit
-                      and sku.eff <= v_demand_start_date
-                      and sku.qty > 0
-                    group by dv.dmdunit, dv.loc
-                    ) demand_group
+                    ) source_sku
+            where dest.loc <> source_sku.loc
+              and dest.item = source_sku.item
+              and ( ( u_equipment_type='FB'and source_sku.flatbed_status=1) 
+                   or 
+                    (u_equipment_type <> 'FB')
+                  )
+         ) lanes
+        
+      where lanes.u_equipment_type = lane_cost.u_equipment_type
+        and lane_cost.direction     = ' '
+        and lanes.dest_pc          = lane_cost.dest_pc
+        and lanes.source_pc        = lane_cost.source_pc
+        and lanes.u_max_dist        < lane_cost.distance
+        ) all_lanes
+    ) ranked_lanes
+/*******************************************************************************
+**                      End of In Line Views
+*******************************************************************************/
+where ranked_lanes.rank = 1
+and   ranked_lanes.item = src.item(+)
+and   ranked_lanes.dest = src.dest(+)
+and   ranked_lanes.source = src.source(+)
+/* added by MAK */
+and not exists ( select '1' 
+                   from udt_gidlimits_na gl1 
+                  where gl1.loc  = src.dest
+                    and gl1.item = src.item 
+                    and gl1.forbidden_loc = src.source )  
+and src.item is null;
 
-            where dest.item = demand_group.item
-              and dest.loc = demand_group.loc
-              and dest.loc <> source_sku.loc
+commit;
+-- Next do the 3 digit zip to 3 digit zip
+insert into igpmgr.intins_sourcing 
+                     ( integration_jobid
+                      ,item, dest, source, transmode, eff, factor, arrivcal
+                      ,majorshipqty, minorshipqty, enabledyndepsw
+                      ,shrinkagefactor, maxshipqty, abbr, sourcing, disc
+                      ,maxleadtime, minleadtime, priority, enablesw
+                      ,yieldfactor, supplyleadtime, costpercentage
+                      ,supplytransfercost, nonewsupplydate, shipcal
+                      ,ff_trigger_control, pullforwarddur, splitqty, loaddur
+                      ,unloaddur, reviewcal, uselookaheadsw, convenientshipqty
+                      ,convenientadjuppct, convenientoverridethreshold
+                      ,roundingfactor, ordergroup, ordergroupmember
+                      ,lotsizesenabledsw, convenientadjdownpct
+                     )
+
+select distinct 'U_30_SRC_DAILY_PART3B'
+      ,ranked_lanes.item, ranked_lanes.dest, ranked_lanes.source
+      ,'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal
+      ,0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor
+      ,0 maxshipqty, ' ' abbr, 'ISS2MAXDISTSRC-3EXT' sourcing, v_init_eff_date disc
+      ,1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw
+      ,100 yieldfactor, 0 supplyleadtime, 100 costpercentage
+      ,0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal
+      ,''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur
+      ,0 unloaddur, ' ' reviewcal, 1 uselookaheadsw, 0 convenientshipqty
+      ,0 convenientadjuppct, 0 convenientoverridethreshold, 0 roundingfactor
+      ,' ' ordergroup, ' ' ordergroupmember, 0 lotsizesenabledsw
+      ,0 convenientadjdownpct
+from sourcing src, 
+     /******************************************************************** 
+     ** Ranked Lanes Piece: Source Item, dest, dest_pc, source, source_pc
+     ** ,max_dist, max_src, distance, rownum 
+     *********************************************************************/
+    (select all_lanes.item, all_lanes.dest, all_lanes.dest_pc, all_lanes.source
+           ,all_lanes.source_pc, all_lanes.u_max_dist, all_lanes.u_max_src
+           ,all_lanes.distance, row_number()
+               over (partition by all_lanes.item, all_lanes.dest 
+                       order by cost_pallet, source asc
+                     ) as rank
+    from  
+    /*********************************************************************
+    ** Getting All Lanes: item, dest, dest_pc, source, source_pc max_dist
+    ** ,max_src, dist and  cost(999 if null) 
+    **********************************************************************/
+    (select /*+ use_hash(lane_cost, lanes) parallel (lane_cost,4) parallel (lanes,4) */
+            lanes.item, lanes.dest, lanes.dest_pc, lanes.source, lanes.source_pc
+            ,lanes.u_max_dist, lanes.u_max_src, lane_cost.distance
+            ,nvl(lane_cost.cost_pallet, 999) cost_pallet, lane_cost.direction
+            ,lane_cost.u_equipment_type
+        from
+            /* Cost for the lanes from UDT_COST_TRANSIT */ 
+            (select direction
+                   ,u_equipment_type u_equipment_type
+                   ,source_pc        source_pc
+                   ,source_geo       source_geo
+                   ,dest_pc          dest_pc
+                   ,dest_geo         dest_geo
+                   ,source_co
+                   ,distance         distance
+                   ,cost_pallet      cost_pallet 
+             from udt_cost_transit
+             order by direction, u_equipment_type, source_pc
+                     ,dest_pc, source_geo, dest_geo
+            )  lane_cost, 
+          /***************************************************************
+             ** Lanes based on matching the source for producitonyield and 
+             ** dest for sku constraint. dest sku, max_dist, max_src, dest_pc
+             ** ,source, source_pc 
+             *****************************************************************/            
+               (select /*+ use_hash(dest, source_sku, demand_group) parallel (dest,4)parallel (sku_source,4 ) */
+                    ' ' direction
+                   ,dest.item
+                   ,dest.loc dest
+                   ,dest.u_max_dist
+                   ,dest.u_max_src
+                   ,dest.dest_pc
+                   ,dest.dest_geo
+                   ,source_sku.loc source
+                   ,source_sku.source_pc
+                   ,source_sku.source_geo
+                   ,case when dest.u_equipment_type='FB' then 'FB' 
+                         else 'VN' 
+                    end u_equipment_type
+            
+            from
+                 /**********************************************************
+                 ** Allowed Destinations (GLID) Based on SKUCONSTRAINT 
+                 ** ( OR ACTUAL DEMAND) Sku, max _dist, max _src, Postal Code
+                 ***********************************************************/
+                 (select distinct sku.item
+                                    ,i.u_materialcode matcode
+                                    ,sku.loc
+                                    ,l.u_max_dist
+                                    ,l.u_max_src
+                                    ,l.postalcode dest_pc
+                                    ,l.u_equipment_type u_equipment_type
+                                    ,l.u_3digitzip dest_geo
+                    from skuconstraint sku
+                        ,loc l
+                        ,item i
+                       where sku.category in (1,6)
+                      and sku.loc = l.loc
+                      and l.loc_type = 3
+                      and l.U_AREA='NA'
+                      and sku.item = i.item
+                      and i.u_stock = 'C'
+                      and sku.qty > 0
+                      and sku.eff <= v_demand_start_date
+                      and trim(l.postalcode ) is not null
+                      and trim(l.u_3digitzip ) is not null
+                    /* added by MAK */
+                    and not exists ( select '1' from udt_gidlimits_na gl 
+                                      where gl.loc  = sku.loc 
+                                        and gl.item = sku.item 
+                                        and gl.mandatory_loc is not null )  
+                    ) dest,
+                    /* Allowed Sources based on PRODUCITONYIELD (PLant).
+                       sku, postalcode 
+                       for the SOURCE SKU
+                    */
+                    (select distinct i.item
+                          ,l.loc
+                          ,l.postalcode source_pc
+                          ,l.u_3digitzip source_geo
+                          ,ps.status flatbed_status                        
+                    from item i
+                        ,loc l
+                        ,sku sku
+                        ,udt_plant_status ps                              
+                    where l.loc=sku.loc
+                    and l.loc_type in (2,4,5)
+                    and l.U_AREA='NA'
+                    and l.postalcode  is not null
+                    and l.u_3digitzip is not null
+                    and is_5digit(l.postalcode) = 1
+                    and is_3digit(l.postalcode) = 1
+                    and l.enablesw=1
+                    and i.item=sku.item
+                    and i.u_stock = 'C'
+                    and i.enablesw=1
+                    and ps.loc=sku.loc
+                    and ps.res= 'SOURCEFLATBED'
+                    union 
+                    select sku.item
+                          ,sku.loc
+                          ,l1.postalcode source_pc
+                          ,l1.u_3digitzip source_geo
+                          ,ps.status flatbed_status
+                    from sku sku
+                        ,loc l1
+                        ,item i1
+                        ,udt_plant_status ps       
+                    where l1.loc_type in (2,4,5)
+                      and i1.u_stock='C'
+                      and sku.item=i1.item
+                      and sku.oh > 0
+                      and sku.loc=l1.loc
+                      and trim(l1.postalcode )  is not null
+                      and trim(l1.u_3digitzip ) is not null
+                      and l1.U_AREA='NA'                       
+                      and l1.loc=ps.loc
+                      and ps.res= 'SOURCEFLATBED'
+                    ) source_sku
+            where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
               and ( ( u_equipment_type='FB'and source_sku.flatbed_status=1) 
                    or 
@@ -652,6 +848,7 @@ from sourcing src,
         and lane_cost.direction     = ' '
         and lanes.dest_geo          = lane_cost.dest_geo
         and lanes.source_geo        = lane_cost.source_geo
+        and lanes.u_max_dist        < lane_cost.distance
         ) all_lanes
     ) ranked_lanes
 /*******************************************************************************
@@ -676,16 +873,16 @@ commit;
 **         MFG location (LOC_TYPE = 1) and assign as a single source for RUNEW.
 *******************************************************************************/
 insert into intins_sourcing ( integration_jobid
-    ,item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
-    maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
-    ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
-    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
+    , item, dest, source, transmode, eff, factor, arrivcal, majorshipqty, minorshipqty, enabledyndepsw, shrinkagefactor, maxshipqty, abbr, sourcing, disc, 
+    maxleadtime, minleadtime, priority, enablesw, yieldfactor, supplyleadtime, costpercentage, supplytransfercost, nonewsupplydate, shipcal, 
+    ff_trigger_control, pullforwarddur, splitqty, loaddur, unloaddur, reviewcal, uselookaheadsw, convenientshipqty, convenientadjuppct, convenientoverridethreshold, 
+    roundingfactor, ordergroup, ordergroupmember, lotsizesenabledsw, convenientadjdownpct)
 
 select distinct 'U_30_SRC_DAILY_PART4'
-    ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
-    ' ' abbr, 'ISS4MFG' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
-    100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
-    ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
+    , u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970', 'MM/DD/YYYY') eff, 1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor, 0 maxshipqty, 
+    ' ' abbr, 'ISS4MFG' sourcing, TO_DATE('01/01/1970', 'MM/DD/YYYY') disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 
+    100 costpercentage, 0 supplytransfercost, TO_DATE('01/01/1970', 'MM/DD/YYYY') nonewsupplydate, ' ' shipcal, ''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur, 
+    ' ' reviewcal, 1 uselookaheadsw, 0 convenientshipqty, 0 convenientadjuppct, 0 convenientoverridethreshold, 0 roundingfactor, ' ' ordergroup, ' ' ordergroupmember, 0 lotsizesenabledsw, 
     0 convenientadjdownpct
     
 from sourcing c, 
@@ -748,16 +945,16 @@ commit;
 **         with RUNEW proxy
 *******************************************************************************/
 insert into intins_sourcing ( integration_jobid
-   ,item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
-    maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
-    ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
-    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
+   , item, dest, source, transmode, eff, factor, arrivcal, majorshipqty, minorshipqty, enabledyndepsw, shrinkagefactor, maxshipqty, abbr, sourcing, disc, 
+    maxleadtime, minleadtime, priority, enablesw, yieldfactor, supplyleadtime, costpercentage, supplytransfercost, nonewsupplydate, shipcal, 
+    ff_trigger_control, pullforwarddur, splitqty, loaddur, unloaddur, reviewcal, uselookaheadsw, convenientshipqty, convenientadjuppct, convenientoverridethreshold, 
+    roundingfactor, ordergroup, ordergroupmember, lotsizesenabledsw, convenientadjdownpct)
 
 select distinct 'U_30_SRC_DAILY_PART5'
-   ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
-    ' ' abbr, 'ISS5MFG' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
-    100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
-    ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
+   , u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970', 'MM/DD/YYYY') eff, 1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor, 0 maxshipqty, 
+    ' ' abbr, 'ISS5MFG' sourcing, TO_DATE('01/01/1970', 'MM/DD/YYYY') disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 
+    100 costpercentage, 0 supplytransfercost, TO_DATE('01/01/1970', 'MM/DD/YYYY') nonewsupplydate, ' ' shipcal, ''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur, 
+    ' ' reviewcal, 1 uselookaheadsw, 0 convenientshipqty, 0 convenientadjuppct, 0 convenientoverridethreshold, 0 roundingfactor, ' ' ordergroup, ' ' ordergroupmember, 0 lotsizesenabledsw, 
     0 convenientadjdownpct
     
 from 
@@ -844,10 +1041,16 @@ insert into igpmgr.intins_sourcing
   ,convenientadjdownpct
 )
 select distinct 'U_30_SRC_DAILY_PART6'
-   ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
-    ' ' abbr, 'COLL0FIXED' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
-    100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
-    ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
+   ,u.item, u.dest, u.source, 'TRUCK' transmode, v_init_eff_date eff
+   ,1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw
+   ,0 shrinkagefactor, 0 maxshipqty, ' ' abbr, 'COLL0FIXED' sourcing
+   ,v_init_eff_date disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime
+   ,1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 100 costpercentage
+   ,0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal
+   ,''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur
+   ,' ' reviewcal, 1 uselookaheadsw, 0 convenientshipqty, 0 convenientadjuppct
+   ,0 convenientoverridethreshold, 0 roundingfactor, ' ' ordergroup
+   ,' ' ordergroupmember, 0 lotsizesenabledsw, 
     0 convenientadjdownpct
 from (select i.item item 
       ,l1.loc source
@@ -876,7 +1079,6 @@ where (  ( i.u_stock = 'A'
                  and skc.category=10
                  and skc.qty>0
              )
-                        
     ) u
 where exists (select 1 
               from sku sku1, sku sku2 
@@ -892,78 +1094,8 @@ and not exists ( select 1
                 );
 commit;
 
---where unmatched try to find single lowest cost freight
-
---insert into sourcing (item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
---    maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
---    ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
---    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
---
---select distinct u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
---    ' ' abbr, 'COLL1UNMATCHED' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
---    100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
---    ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
---    0 convenientadjdownpct
---from 
---
---    (select u.item, u.dest, u.dest_pc, u.source, u.source_pc, u.u_max_dist, u.u_max_src, u.distance, u.cost_pallet, row_number()
---                            over (partition by u.item, u.dest order by cost_pallet, source asc) as rank
---    from 
---
---    (select c.item, c.dest, c.dest_pc, c.source, c.source_pc, c.u_max_dist, c.u_max_src, pc.distance,nvl(pc.cost_pallet, 999) cost_pallet
---        from
---                    
---            (select distinct source_pc, dest_pc, source_co, max(distance) distance, max(cost_pallet) cost_pallet 
---            from udt_cost_transit  
---            group by source_pc, dest_pc, source_co, dest_co
---            )  pc, 
---            
---            (select distinct c.item, c.loc source, c.u_max_dist, c.u_max_src, c.source_pc, s.loc dest, s.dest_pc
---             from
---                                     
---                    (select distinct k.item, k.loc, l.u_max_dist, l.u_max_src, l.postalcode source_pc
---                    from skuconstraint k, loc l, item i, sourcing c
---                    where k.category = 10
---                    and k.loc = l.loc
---                    and l.loc_type = 3
---                    and k.item = i.item
---                    and i.u_stock = 'A'
---                    and k.qty > 0
---                    and k.item = c.item(+)
---                    and k.loc = c.source(+)
---                    and c.item is null
---                    ) c,
---                    
---                    (select s.item, s.loc, l.postalcode dest_pc
---                    from sku s, loc l, item i
---                    where s.loc = l.loc
---                    and l.loc_type = 2
---                    and s.item = i.item
---                    and i.u_stock = 'A'
---                    and s.item = i.item
---                    ) s
---                
---                where c.item = s.item
---                ) c
---                    
---        where c.dest_pc = pc.dest_pc(+)
---        and c.source_pc = pc.source_pc(+)
---
---        ) u
---        
---    --where u.distance < u.u_max_dist 
---    
---    ) u
---    
---
---where u.rank = 1;
---
---commit;
-
---if still unmatched use the zip code to default plant table
-
 /*******************************************************************************
-** Part 7: 
+** Part 7: collections: Build collection based on udt_default_zip
 *******************************************************************************/
 insert into igpmgr.intins_sourcing
 ( integration_jobid
@@ -1077,51 +1209,6 @@ select distinct 'U_30_SRC_DAILY_PART8'
       
 commit;
 
---insert into sourcing (item, dest, source, transmode, eff,     factor, arrivcal,     majorshipqty,     minorshipqty,     enabledyndepsw,     shrinkagefactor,     maxshipqty,     abbr,     sourcing,     disc,     
---    maxleadtime,     minleadtime,     priority,     enablesw,     yieldfactor,     supplyleadtime,     costpercentage,     supplytransfercost,     nonewsupplydate,     shipcal,     
---    ff_trigger_control,     pullforwarddur,     splitqty,     loaddur,     unloaddur,     reviewcal,     uselookaheadsw,     convenientshipqty,     convenientadjuppct,     convenientoverridethreshold,     
---    roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct)
---
---select distinct u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
---    ' ' abbr, 'TPM_RELOC' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
---    100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
---    ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
---    0 convenientadjdownpct
---from 
---
---(select t.item, t.matcode, t.source, p.dest
---from 
---
---    (select s.item, s.loc source, r.dest, r.matcode
---    from sku s, item i, udt_tpm_relocation_na r
---    where s.loc = r.source 
---    and s.item = i.item
---    and i.u_materialcode = r.matcode
---    ) t,
---
---    (
---    select s.item, s.loc dest, r.matcode, r.source
---    from udt_tpm_relocation_na r, loc l,
---
---        (select distinct s.item, s.loc, i.u_materialcode
---        from sku s, item i, productionmethod p
---        where s.item = i.item
---        and s.item = p.item
---        and s.loc = p.loc
---        ) s
---
---    where r.dest = l.loc
---    and l.loc_type in (2, 4)
---    and r.dest = s.loc
---    and r.matcode = s.u_materialcode
---    ) p
---
---where t.item = p.item
---and t.source = p.source
---and t.dest = p.dest
---) u;
---
---commit;
 
 /*******************************************************************************
 ** Part 9: Update Sourcing Min LeadTime
