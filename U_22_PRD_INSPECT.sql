@@ -182,6 +182,7 @@ from res r,
     from sku s, loc l, item i
     where s.loc = l.loc
     and l.loc_type in ( 2, 4)
+    and l.u_area='NA'
     and l.enablesw = 1
     and s.enablesw = 1
     and s.item = i.item
@@ -191,7 +192,6 @@ from res r,
     
     select distinct 'INSCST'
                   ||'@'
-                  ||lpad(i.u_materialcode, 2, '0')
                   ||s.loc res
                   ,s.loc, 4 type, 18 qtyuom
     from sku s, loc l, item i
@@ -368,7 +368,7 @@ from cost c, costtier t,
     from
 
         (select s.item, i.u_materialcode matcode, s.loc, s.productionmethod
-               ,s.stepnum, s.res, 'LOCAL:RES:REPCST@'
+               ,s.stepnum, s.res, 'LOCAL:RES:INSCST@'
                                    ||s.loc
                                    ||'-202' cost
         from productionstep s, item i
