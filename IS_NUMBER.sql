@@ -7,9 +7,9 @@ is v_number number;
 
 begin
    if  LENGTH(TRIM(TRANSLATE(p_string, ' +-.0123456789', ' '))) > 0 then
-       v_number := 1;
+       v_number := 0;
     else
-      v_number := 0;
+      v_number := 1;
    end if;
    
    return v_number;

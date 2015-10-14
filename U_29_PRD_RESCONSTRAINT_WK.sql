@@ -51,7 +51,7 @@ order by u.res, u.eff;
 commit;
 
 /******************************************************************
-** Part 2: Create Resource Penalaty                               * 
+** Part 2: Create Resource Penalty                               * 
 ******************************************************************/
 delete respenalty  where substr(res, 1, 6)  in ('INSCAP', 'REPCAP');
 

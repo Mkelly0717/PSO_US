@@ -1,6 +1,10 @@
 --------------------------------------------------------
 --  DDL for Procedure U_30_SRC_DAILY
 --------------------------------------------------------
+set define off;
+
+  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_30_SRC_DAILY" as
+
 /* U_30_SRC_DAILY_PART1:  TPM(4) to SC(2), ST(5) 
    U_30_SRC_DAILY_PART2:  TPM(4),SC(2),or ST(5) to GLID (3) ==> 5 digit lanes
    U_30_SRC_DAILY_PART2b: TPM(4),SC(2),or ST(5) to GLID (3) ==> 3 digit lanes
@@ -10,9 +14,6 @@
    U_30_SRC_DAILY_PART5:  Allow sourcing from MFG if substitution is allowed.
    U_30_SRC_DAILY_PART6:
 */
-set define off;
-
-  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_30_SRC_DAILY" as
 
 begin
 
@@ -119,10 +120,10 @@ from sourcing src,
      ** ,max_dist, max_src, distance, rownum 
      *********************************************************************/
     (select all_lanes.item, all_lanes.dest, all_lanes.dest_pc, all_lanes.source
-           ,all_lanes.source_pc, all_lanes.u_max_dist, all_lanes.u_max_src
-           ,all_lanes.distance, row_number()
-           over ( partition by all_lanes.item, all_lanes.dest 
-                  order by cost_pallet, source asc
+           ,ALL_LANES.SOURCE_PC, ALL_LANES.U_MAX_DIST, ALL_LANES.U_MAX_SRC
+           ,all_lanes.distance, dense_rank()
+           OVER ( PARTITION BY ALL_LANES.ITEM, ALL_LANES.DEST 
+                  order by cost_pallet asc
                  ) as rank
     from  
     /*********************************************************************
@@ -219,7 +220,7 @@ from sourcing src,
                     and l.postalcode  is not null
                     and l.u_3digitzip is not null
                     and is_5digit(l.postalcode) = 1
-                    and is_3digit(l.postalcode) = 1
+                    and is_3digit(l.u_3digitzip) = 1
                     and l.enablesw=1
                     and i.item=sku.item
                     and i.u_stock = 'C'
@@ -265,7 +266,7 @@ from sourcing src,
 /*******************************************************************************
 **                      End of In Line Views
 *******************************************************************************/
-where ranked_lanes.rank < ranked_lanes.u_max_src
+where ranked_lanes.rank <= ranked_lanes.u_max_src
 and   ranked_lanes.item = src.item(+)
 and   ranked_lanes.dest = src.dest(+)
 and   ranked_lanes.source = src.source(+)
@@ -312,10 +313,10 @@ from sourcing src,
      ** ,max_dist, max_src, distance, rownum 
      ************************************************************************/
     (select all_lanes.item, all_lanes.dest, all_lanes.dest_pc, all_lanes.source
-           ,all_lanes.source_pc, all_lanes.u_max_dist, all_lanes.u_max_src
-           ,all_lanes.distance, row_number()
+           ,ALL_LANES.SOURCE_PC, ALL_LANES.U_MAX_DIST, ALL_LANES.U_MAX_SRC
+           ,all_lanes.distance, dense_rank()
            over ( partition by all_lanes.item, all_lanes.dest 
-                  order by cost_pallet, source asc
+                  order by cost_pallet asc
                  ) as rank
     from  
     /**************************************************************************
@@ -412,7 +413,7 @@ from sourcing src,
                     and l.postalcode  is not null
                     and l.u_3digitzip is not null
                     and is_5digit(l.postalcode) = 1
-                    and is_3digit(l.postalcode) = 1
+                    and is_3digit(l.u_3digitzip) = 1
                     and l.enablesw=1
                     and i.item=sku.item
                     and i.u_stock = 'C'
@@ -458,15 +459,26 @@ from sourcing src,
 /*******************************************************************************
 **                      End of In Line Views
 *******************************************************************************/
-where ranked_lanes.rank < ranked_lanes.u_max_src
+where ranked_lanes.rank <= ranked_lanes.u_max_src
 and   ranked_lanes.item = src.item(+)
 and   ranked_lanes.dest = src.dest(+)
 and   ranked_lanes.source = src.source(+)
+--and rownum <= ranked_lanes.u_max_src - ( select count(1)
+--                                from sourcing src4
+--                               where src4.dest=ranked_lanes.dest
+--                                 and src4.item=ranked_lanes.item
+--                            )
 and not exists ( select '1' 
                    from udt_gidlimits_na gl1 
                   where gl1.loc  = src.dest
                     and gl1.item = src.item 
-                    and gl1.forbidden_loc = src.source )  
+                    and gl1.forbidden_loc = src.source )
+and not exists ( select '1'
+                   from sourcing src3
+                  where src3.source=ranked_lanes.source
+                    and src3.dest=ranked_lanes.dest
+                    and src3.item=ranked_lanes.item
+                )
 and src.item is null;
 
 commit;
@@ -512,10 +524,10 @@ from sourcing src,
      ** ,max_dist, max_src, distance, rownum 
      *********************************************************************/
     (select all_lanes.item, all_lanes.dest, all_lanes.dest_pc, all_lanes.source
-           ,all_lanes.source_pc, all_lanes.u_max_dist, all_lanes.u_max_src
-           ,all_lanes.distance, row_number()
+           ,ALL_LANES.SOURCE_PC, ALL_LANES.U_MAX_DIST, ALL_LANES.U_MAX_SRC
+           ,all_lanes.distance, dense_rank()
                over (partition by all_lanes.item, all_lanes.dest 
-                       order by cost_pallet, source asc
+                       order by cost_pallet asc
                      ) as rank
     from  
     /*********************************************************************
@@ -613,7 +625,7 @@ from sourcing src,
                     and l.postalcode  is not null
                     and l.u_3digitzip is not null
                     and is_5digit(l.postalcode) = 1
-                    and is_3digit(l.postalcode) = 1
+                    and is_3digit(l.u_3digitzip) = 1
                     and l.enablesw=1
                     and i.item=sku.item
                     and i.u_stock = 'C'
@@ -664,15 +676,27 @@ and   ranked_lanes.item = src.item(+)
 and   ranked_lanes.dest = src.dest(+)
 and   ranked_lanes.source = src.source(+)
 /* added by MAK */
+--and rownum <= ranked_lanes.u_max_src - ( select count(1)
+--                                from sourcing src4
+--                               where src4.dest=ranked_lanes.dest
+--                                 and src4.item=ranked_lanes.item
+--                            )
 and not exists ( select '1' 
                    from udt_gidlimits_na gl1 
                   where gl1.loc  = src.dest
                     and gl1.item = src.item 
-                    and gl1.forbidden_loc = src.source )  
+                    and gl1.forbidden_loc = src.source )
+and not exists ( select '1'
+                   from sourcing src3
+                  where src3.source=ranked_lanes.source
+                    and src3.dest=ranked_lanes.dest
+                    and src3.item=ranked_lanes.item
+                )
 and src.item is null;
 
 commit;
 -- Next do the 3 digit zip to 3 digit zip
+
 insert into igpmgr.intins_sourcing 
                      ( integration_jobid
                       ,item, dest, source, transmode, eff, factor, arrivcal
@@ -707,10 +731,10 @@ from sourcing src,
      ** ,max_dist, max_src, distance, rownum 
      *********************************************************************/
     (select all_lanes.item, all_lanes.dest, all_lanes.dest_pc, all_lanes.source
-           ,all_lanes.source_pc, all_lanes.u_max_dist, all_lanes.u_max_src
-           ,all_lanes.distance, row_number()
+           ,ALL_LANES.SOURCE_PC, ALL_LANES.U_MAX_DIST, ALL_LANES.U_MAX_SRC
+           ,all_lanes.distance, dense_rank()
                over (partition by all_lanes.item, all_lanes.dest 
-                       order by cost_pallet, source asc
+                       order by cost_pallet asc
                      ) as rank
     from  
     /*********************************************************************
@@ -808,7 +832,7 @@ from sourcing src,
                     and l.postalcode  is not null
                     and l.u_3digitzip is not null
                     and is_5digit(l.postalcode) = 1
-                    and is_3digit(l.postalcode) = 1
+                    and is_3digit(l.u_3digitzip) = 1
                     and l.enablesw=1
                     and i.item=sku.item
                     and i.u_stock = 'C'
@@ -859,15 +883,27 @@ and   ranked_lanes.item = src.item(+)
 and   ranked_lanes.dest = src.dest(+)
 and   ranked_lanes.source = src.source(+)
 /* added by MAK */
+
+--and rownum <= ranked_lanes.u_max_src - ( select count(1)
+--                                from sourcing src4
+--                               where src4.dest=ranked_lanes.dest
+--                                 and src4.item=ranked_lanes.item
+--                            )
 and not exists ( select '1' 
                    from udt_gidlimits_na gl1 
                   where gl1.loc  = src.dest
                     and gl1.item = src.item 
-                    and gl1.forbidden_loc = src.source )  
+                    and gl1.forbidden_loc = src.source )
+and not exists ( select '1'
+                   from sourcing src3
+                  where src3.source=ranked_lanes.source
+                    and src3.dest=ranked_lanes.dest
+                    and src3.item=ranked_lanes.item
+                )
+
 and src.item is null;
 
 commit;
-
 /*******************************************************************************
 ** Part 4: where LOC:U_RUNEW_CUST = 1 for GID find the closest 
 **         MFG location (LOC_TYPE = 1) and assign as a single source for RUNEW.
@@ -879,24 +915,24 @@ insert into intins_sourcing ( integration_jobid
     roundingfactor, ordergroup, ordergroupmember, lotsizesenabledsw, convenientadjdownpct)
 
 select distinct 'U_30_SRC_DAILY_PART4'
-    , u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970', 'MM/DD/YYYY') eff, 1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor, 0 maxshipqty, 
-    ' ' abbr, 'ISS4MFG' sourcing, TO_DATE('01/01/1970', 'MM/DD/YYYY') disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 
-    100 costpercentage, 0 supplytransfercost, TO_DATE('01/01/1970', 'MM/DD/YYYY') nonewsupplydate, ' ' shipcal, ''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur, 
+    , u.item, u.dest, u.source, 'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor, 0 maxshipqty, 
+    ' ' abbr, 'ISS4MFG' sourcing, v_init_eff_date disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 
+    100 costpercentage, 0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal, ''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur, 
     ' ' reviewcal, 1 uselookaheadsw, 0 convenientshipqty, 0 convenientadjuppct, 0 convenientoverridethreshold, 0 roundingfactor, ' ' ordergroup, ' ' ordergroupmember, 0 lotsizesenabledsw, 
     0 convenientadjdownpct
     
 from sourcing c, 
 
-    (select u.item, u.dest, u.dest_pc, u.source, u.source_pc, u.u_max_dist, u.u_max_src, u.distance, u.cost_pallet, row_number()
-                            over (partition by u.item, u.dest order by cost_pallet, source asc) as rank
+    (select u.item, u.dest, u.dest_pc, u.source, u.source_pc, u.u_max_dist, u.u_max_src, u.distance, u.cost_pallet, dense_rank()
+                            over (partition by u.item, u.dest order by cost_pallet asc) as rank
     from  
 
     (select c.item, c.dest, c.dest_pc, c.source, c.source_pc, c.u_max_dist, c.u_max_src, pc.distance,nvl(pc.cost_pallet, 999) cost_pallet
         from
                     
-            (select distinct lpad(source_pc, 5, 0) source_pc, lpad(dest_pc, 5, 0) dest_pc, source_co, max(distance) distance, max(cost_pallet) cost_pallet 
+            (select distinct source_pc source_pc, dest_pc dest_pc, source_co, max(distance) distance, max(cost_pallet) cost_pallet 
             from udt_cost_transit  
-            group by lpad(source_pc, 5, 0), lpad(dest_pc, 5, 0), source_co, dest_co
+            group by source_pc, dest_pc, source_co, dest_co
             )  pc, 
                         
             (select f.item, f.loc dest, f.u_max_dist, f.u_max_src, f.dest_pc, p.loc source, p.source_pc
@@ -937,7 +973,6 @@ and u.dest = c.dest(+)
 and c.item is null;
 
 commit;
-
 /*******************************************************************************
 ** Part 5: where U_RUNEW_CUST = 1 and forecast exists for other 
 **         non-RUNEW items then allow sourcing to LOC_TYPE = 1 
@@ -951,24 +986,24 @@ insert into intins_sourcing ( integration_jobid
     roundingfactor, ordergroup, ordergroupmember, lotsizesenabledsw, convenientadjdownpct)
 
 select distinct 'U_30_SRC_DAILY_PART5'
-   , u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970', 'MM/DD/YYYY') eff, 1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor, 0 maxshipqty, 
-    ' ' abbr, 'ISS5MFG' sourcing, TO_DATE('01/01/1970', 'MM/DD/YYYY') disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 
-    100 costpercentage, 0 supplytransfercost, TO_DATE('01/01/1970', 'MM/DD/YYYY') nonewsupplydate, ' ' shipcal, ''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur, 
+   , u.item, u.dest, u.source, 'TRUCK' transmode, v_init_eff_date eff, 1 factor, ' ' arrivcal, 0 majorshipqty, 0 minorshipqty, 1 enabledyndepsw, 0 shrinkagefactor, 0 maxshipqty, 
+    ' ' abbr, 'ISS5MFG' sourcing, v_init_eff_date disc, 1440 * 365 * 100 maxleadtime, 0 minleadtime, 1 priority, 1 enablesw, 100 yieldfactor, 0 supplyleadtime, 
+    100 costpercentage, 0 supplytransfercost, v_init_eff_date nonewsupplydate, ' ' shipcal, ''  ff_trigger_control, 0 pullforwarddur, 0 splitqty, 0 loaddur, 0 unloaddur, 
     ' ' reviewcal, 1 uselookaheadsw, 0 convenientshipqty, 0 convenientadjuppct, 0 convenientoverridethreshold, 0 roundingfactor, ' ' ordergroup, ' ' ordergroupmember, 0 lotsizesenabledsw, 
     0 convenientadjdownpct
     
 from 
 
-    (select u.item, u.dest, u.dest_pc, u.source, u.source_pc, u.u_max_dist, u.u_max_src, u.distance, u.cost_pallet, row_number()
-                            over (partition by u.item, u.dest order by cost_pallet, source asc) as rank
+    (select u.item, u.dest, u.dest_pc, u.source, u.source_pc, u.u_max_dist, u.u_max_src, u.distance, u.cost_pallet, dense_rank()
+                            over (partition by u.item, u.dest order by cost_pallet asc) as rank
     from  
 
     (select c.item, c.dest, c.dest_pc, c.source, c.source_pc, c.u_max_dist, c.u_max_src, pc.distance,nvl(pc.cost_pallet, 999) cost_pallet
         from
                     
-            (select distinct lpad(source_pc, 5, 0) source_pc, lpad(dest_pc, 5, 0) dest_pc, source_co, max(distance) distance, max(cost_pallet) cost_pallet 
+            (select distinct source_pc source_pc, dest_pc dest_pc, source_co, max(distance) distance, max(cost_pallet) cost_pallet 
             from udt_cost_transit  
-            group by lpad(source_pc, 5, 0), lpad(dest_pc, 5, 0), source_co, dest_co
+            group by source_pc, dest_pc, source_co, dest_co
             )  pc, 
                         
             (select f.item, f.loc dest, f.u_max_dist, f.u_max_src, f.dest_pc, p.loc source, p.source_pc
@@ -1022,7 +1057,6 @@ from
 where u.rank = 1;
 
 commit;
-
 /*******************************************************************************
 ** Part 6: collections
 **         Find all possible sources within loc.u_max_dist & loc.u_max_srcs 
@@ -1105,9 +1139,9 @@ insert into igpmgr.intins_sourcing
     roundingfactor,     ordergroup,     ordergroupmember,     lotsizesenabledsw,     convenientadjdownpct
 )
 select distinct 'U_30_SRC_DAILY_PART7'
-   ,u.item, u.dest, u.source, 'TRUCK' transmode, TO_DATE('01/01/1970','MM/DD/YYYY') eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
-    ' ' abbr, 'COLL3ZIPCODE' sourcing,     TO_DATE('01/01/1970','MM/DD/YYYY') disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
-    100 costpercentage,     0 supplytransfercost,     TO_DATE('01/01/1970','MM/DD/YYYY') nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
+   ,u.item, u.dest, u.source, 'TRUCK' transmode, v_init_eff_date eff,     1 factor,    ' ' arrivcal,     0 majorshipqty,     0 minorshipqty,     1 enabledyndepsw,     0 shrinkagefactor,     0 maxshipqty,     
+    ' ' abbr, 'COLL3ZIPCODE' sourcing,     v_init_eff_date disc,     1440 * 365 * 100 maxleadtime,     0 minleadtime,     1 priority,     1 enablesw,     100 yieldfactor,     0 supplyleadtime,     
+    100 costpercentage,     0 supplytransfercost,     v_init_eff_date nonewsupplydate,     ' ' shipcal,    ''  ff_trigger_control,     0 pullforwarddur,     0 splitqty,     0 loaddur,     0 unloaddur,     
     ' ' reviewcal,     1 uselookaheadsw,     0 convenientshipqty,     0 convenientadjuppct,     0 convenientoverridethreshold,     0 roundingfactor,     ' ' ordergroup,     ' ' ordergroupmember,     0 lotsizesenabledsw,     
     0 convenientadjdownpct
 from 
@@ -1115,7 +1149,7 @@ from
     (SELECT k.item, k.loc source, k.postalcode, z.loc dest, k.qty
          FROM sourcing c, udt_default_zip z, sku s,
          
-              (  SELECT DISTINCT k.item, k.loc, lpad(l.postalcode, 5, 0) postalcode, SUM (qty) qty
+              (  SELECT DISTINCT k.item, k.loc, l.postalcode postalcode, SUM (qty) qty
                    FROM skuconstraint k, item i, loc l
                   WHERE     k.category = 10
                         AND k.item = i.item
@@ -1128,7 +1162,7 @@ from
                  
         WHERE k.item = c.item(+) 
         AND k.loc = c.source(+)
-        and k.postalcode = lpad(z.postalcode, 5, 0)
+        and k.postalcode = z.postalcode
         and k.item = s.item
         and z.loc = s.loc 
         AND c.item IS NULL
@@ -1149,7 +1183,7 @@ insert into igpmgr.intins_sourcing
 with 
 source_skus ( source,  postal_code, item, stocktype)
  as
-  ( select l.loc source, lpad(l.postalcode,5,0) postalcode, i.item, ps.u_stock
+  ( select l.loc source, l.postalcode postalcode, i.item, ps.u_stock
   from scpomgr.loc l, scpomgr.udt_plant_status ps, item i, sku sku
      where l.loc_type in ('2','4')
        and l.u_area='NA'
@@ -1164,7 +1198,7 @@ source_skus ( source,  postal_code, item, stocktype)
    ),
 dest_skus ( dest,  postal_code,  item, max_dist, max_src, stocktype)
  as  
-  ( select l.loc, lpad(l.postalcode,5,0) postalcode, i.item, l.u_max_dist, l.u_max_src, ps.u_stock
+  ( select l.loc, l.postalcode postalcode, i.item, l.u_max_dist, l.u_max_src, ps.u_stock
   from scpomgr.loc l, scpomgr.udt_plant_status ps, item i, sku sku
      where l.loc_type in ('2','4')
        and l.u_area='NA'
@@ -1185,16 +1219,16 @@ lanes (source, dest, item, max_src, cost_pallet)
   where src.source <> dest.dest
     and src.item=dest.item
     and src.stocktype=dest.stocktype
-    and lpad(src.postal_code,5,0)  = lpad(ct.source_pc,5,0)
-    and lpad(dest.postal_code,5,0) = lpad(ct.dest_pc,5,0)
+    and src.postal_code  = ct.source_pc
+    and dest.postal_code = ct.dest_pc
     having max(ct.distance) < 800 -- dest.max_dist
       group by src.source, dest.dest, src.item, dest.max_src
  ),
 ranked_lanes ( source, dest, item, max_src, rank)
   as 
    (
- select lane.source, lane.dest, lane.item, lane.max_src
- ,row_number() over (partition by lane.item, lane.dest order by lane.cost_pallet, lane.source asc) as rank
+ SELECT LANE.SOURCE, LANE.DEST, LANE.ITEM, LANE.MAX_SRC
+ ,dense_rank() over (partition by lane.item, lane.dest order by lane.cost_pallet asc) as rank
  from lanes lane
 )
 select distinct 'U_30_SRC_DAILY_PART8' 
@@ -1208,7 +1242,6 @@ select distinct 'U_30_SRC_DAILY_PART8'
    order by rl.dest, rl.item;
       
 commit;
-
 
 /*******************************************************************************
 ** Part 9: Update Sourcing Min LeadTime
@@ -1277,15 +1310,40 @@ insert into igpmgr.intins_res
     levelseqnum,  criticalitem, checkmaxcap,  unitpenalty,  adjfactor,  source,  enablesw,  subtype,   qtyuom,   currencyuom,     productionfamilychgoveropt
 )
 select distinct 'U_30_SRC_DAILY_PART12'
-   ,u.dest loc, 5 type,     u.res,     ' '  cal,     0 cost,     ' '  descr,     0 avgskuchg,     0 avgfamilychg,     0 avgskuchgcost,     0 avgfamilychgcost,     0 levelloadsw,     
-    1 levelseqnum,     ' '  criticalitem,     1 checkmaxcap,     0 unitpenalty,     1 adjfactor,  u.source,     1 enablesw,     6 subtype,     18 qtyuom,     11 currencyuom,     0 productionfamilychgoveropt
-from res r,
-
-    (select distinct c.source, c.dest , c.source||'->'||c.dest res from sourcing c
+  ,u.dest loc
+  , 5 type
+  , u.res
+  , ' ' cal
+  , 0 cost
+  , ' ' descr
+  , 0 avgskuchg
+  , 0 avgfamilychg
+  , 0 avgskuchgcost
+  , 0 avgfamilychgcost
+  , 0 levelloadsw
+  , 1 levelseqnum
+  , ' ' criticalitem
+  , 1 checkmaxcap
+  , 0 unitpenalty
+  , 1 adjfactor
+  , u.source
+  , 1 enablesw
+  , 6 subtype
+  , 18 qtyuom
+  , 11 currencyuom
+  , 0 productionfamilychgoveropt
+from res r
+  , (select distinct c.source
+       , C.DEST
+      , c.sourcing
+        || '_'
+        || c.source
+        ||'->'
+        ||c.dest res
+    from sourcing c
     ) u
-
 where u.res = r.res(+)
-and r.res is null;
+    and r.res is null;
 
 commit;
 
@@ -1297,17 +1355,36 @@ insert into igpmgr.intins_sourcingreq
 )
 
 select 'U_30_SRC_DAILY_PART13'
-       ,1 stepnum,     3 nextsteptiming,     1 rate,     0 leadtime,     0 offset,     1 enablesw,     u.sourcing,     to_date('01/01/1970', 'MM/DD/YYYY') eff,     u.res,     u.item,     u.dest,     u.source,     18 qtyuom
-from sourcingrequirement r, 
-
-    (select c.item, c.dest, c.source, c.sourcing, c.source||'->'||c.dest res from sourcing c
+  ,1 stepnum
+  , 3 nextsteptiming
+  , 1 rate
+  , 0 leadtime
+  , 0 offset
+  , 1 enablesw
+  , u.sourcing
+  , v_init_eff_date eff
+  , u.res
+  , u.item
+  , u.dest
+  , u.source
+  , 18 qtyuom
+from sourcingrequirement r
+  , (select c.item
+      , c.dest
+      , c.source
+      , c.sourcing
+      , c.sourcing
+        || '_'
+        || c.source
+        ||'->'
+        ||c.dest res
+    from sourcing c
     ) u
-    
 where u.item = r.item(+)
-and u.dest = r.dest(+)
-and u.source = r.source(+)
-and u.sourcing = r.sourcing(+)
-and r.item is null;
+    and u.dest = r.dest(+)
+    and u.source = r.source(+)
+    and u.sourcing = r.sourcing(+)
+    and r.item is null;
 
 commit;
 
@@ -1319,16 +1396,30 @@ insert into igpmgr.intins_cost
   ,  qtyuom,  currencyuom,   accumcal,  maxqty,     maxutilization
 )
 select distinct 'U_30_SRC_DAILY_PART14'
-    ,'LOCAL:RES:'||u.res||'-202' cost,     1 enablesw,     0 cumulativesw
-    ,     0 groupedsw,     0 sharedsw,     18 qtyuom,     11 currencyuom
-    ,    ' '   accumcal,     0 maxqty,     0 maxutilization
-from cost c, 
-
-    (select c.item, c.dest, c.source, c.sourcing, c.source||'->'||c.dest res, 'LOCAL:RES:'||c.source||'->'||c.dest||'-202' cost  from sourcing c
+  ,u.cost
+  , 1 enablesw
+  , 0 cumulativesw
+  , 0 groupedsw
+  , 0 sharedsw
+  , 18 qtyuom
+  , 11 currencyuom
+  , ' ' accumcal
+  , 0 maxqty
+  , 0 maxutilization
+from cost c
+  , (select c.item
+      , c.dest
+      , c.source
+      , c.sourcing
+        || '_'
+        || c.source
+        ||'->'
+        ||c.dest
+        || '-202' cost
+    from sourcing c
     ) u
-    
 where u.cost = c.cost(+)
-and c.cost is null;
+    and c.cost is null;
 
 commit;
 
@@ -1337,48 +1428,50 @@ commit;
 *******************************************************************************/
 insert into igpmgr.intins_costtier 
 (integration_jobid, breakqty, category, value, eff, cost)
-    select distinct 'U_30_SRC_DAILY_PART15'
-      ,0 breakqty
-      ,303 category
-      ,lane_5zip_costed.value
-      ,v_init_eff_date eff
-      ,lane_5zip_costed.cost
-    from costtier costtier
-      , cost cost
-      , (select distinct lane_5zip.source source
-          ,lane_5zip.dest dest
-          ,'LOCAL:RES:'
-            ||lane_5zip.source
-            ||'->'
-            ||lane_5zip.dest
-            ||'-202' cost
-          ,nvl(round(tranit_cost.cost_pallet/480, 3), 10) value
-        from udt_cost_transit tranit_cost
-          , (select distinct src.source
-              ,src.dest
-              ,ls.postalcode source_pc
-              ,ld.postalcode dest_pc
-              ,case
-                    when ld.u_equipment_type = 'FB'
-                    then 'FB'
-                    else 'VN'
-                end u_equipment_type
-            from sourcing src
-              , loc ls
-              , loc ld
-            where src.source = ls.loc
-                and src.dest = ld.loc
-            ) lane_5zip
-        where tranit_cost.direction(+)=' '
-            and tranit_cost.u_equipment_type(+)=lane_5zip.u_equipment_type
-            and lane_5zip.dest_pc = tranit_cost.dest_pc(+)
-            and lane_5zip.source_pc = tranit_cost.source_pc(+)
-        order by source
-          , dest
-        ) lane_5zip_costed
-    where cost.cost = lane_5zip_costed.cost
-      and lane_5zip_costed.cost = costtier.cost(+)
-      and costtier.cost is null;
+select distinct 'U_30_SRC_DAILY_PART15'
+  ,0 breakqty
+  ,303 category
+  ,lane_5zip_costed.value
+  ,v_init_eff_date eff
+  ,lane_5zip_costed.cost
+from costtier costtier
+  , cost cost
+  , (select distinct lane_5zip.source source
+      ,lane_5zip.dest dest
+      ,lane_5zip.sourcing
+        || '_'
+        ||lane_5zip.source
+        ||'->'
+        ||lane_5zip.dest
+        ||'-202' cost
+      ,nvl(round(tranit_cost.cost_pallet/480, 3), 10) value
+    from udt_cost_transit tranit_cost
+      , (select distinct src.source
+          ,src.sourcing
+          ,src.dest
+          ,ls.postalcode source_pc
+          ,ld.postalcode dest_pc
+          ,case
+                when ld.u_equipment_type = 'FB'
+                then 'FB'
+                else 'VN'
+            end u_equipment_type
+        from sourcing src
+          , loc ls
+          , loc ld
+        where src.source = ls.loc
+            and src.dest = ld.loc
+        ) lane_5zip
+    where tranit_cost.direction(+)=' '
+        and tranit_cost.u_equipment_type(+)=lane_5zip.u_equipment_type
+        and lane_5zip.dest_pc = tranit_cost.dest_pc(+)
+        and lane_5zip.source_pc = tranit_cost.source_pc(+)
+    order by source
+      , dest
+    ) lane_5zip_costed
+where cost.cost = lane_5zip_costed.cost
+    and lane_5zip_costed.cost = costtier.cost(+)
+    and costtier.cost is null;
 
 commit;
 
@@ -1391,39 +1484,49 @@ commit;
 insert into intups_costtier 
 (integration_jobid, breakqty, category, value, eff, cost)
 select distinct 'U_30_SRC_DAILY_PART16'
-          ,0 breakqty
-          ,303 category
-          ,lane_3zip_costed.value
-          ,v_init_eff_date eff
-          ,lane_3zip_costed.cost
-from costtier costtier, cost cost, 
-    (select distinct lane_3zip.source source
-             ,lane_3zip.dest dest
-             ,'LOCAL:RES:'||lane_3zip.source||'->'||lane_3zip.dest||'-202' cost
-             ,nvl(round(tranit_cost.cost_pallet/480, 3), 10) value
-      from udt_cost_transit tranit_cost, 
-        ( select distinct src.source
-                   ,src.dest
-                   ,ls.u_3digitzip source_geo
-                   ,ld.u_3digitzip dest_geo
-                   ,case 
-                      when ld.u_equipment_type = 'FB' then 'FB'
-                      else 'VN'
-                    end u_equipment_type
-           from sourcing src, loc ls, loc ld 
-          where src.source = ls.loc
+  ,0 breakqty
+  ,303 category
+  ,lane_3zip_costed.value
+  ,v_init_eff_date eff
+  ,lane_3zip_costed.cost
+from costtier costtier
+  , cost cost
+  , (select distinct lane_3zip.source source
+      ,lane_3zip.dest dest
+      ,lane_3zip.sourcing
+        ||'_'
+        ||lane_3zip.source
+        ||'->'
+        ||lane_3zip.dest
+        ||'-202' cost
+      ,nvl(round(tranit_cost.cost_pallet/480, 3), 10) value
+    from udt_cost_transit tranit_cost
+      , ( select distinct src.source
+          ,src.sourcing
+          ,src.dest
+          ,ls.u_3digitzip source_geo
+          ,ld.u_3digitzip dest_geo
+          ,case
+                when ld.u_equipment_type = 'FB'
+                then 'FB'
+                else 'VN'
+            end u_equipment_type
+        from sourcing src
+          , loc ls
+          , loc ld
+        where src.source = ls.loc
             and src.dest = ld.loc
-          ) lane_3zip        
+        ) lane_3zip
     where tranit_cost.direction(+)=' '
-      and lane_3zip.u_equipment_type = tranit_cost.u_equipment_type(+)
-      and lane_3zip.source_geo = tranit_cost.source_geo(+)
-      and lane_3zip.dest_geo   = tranit_cost.dest_geo(+)
-    order by source, dest
+        and lane_3zip.u_equipment_type = tranit_cost.u_equipment_type(+)
+        and lane_3zip.source_geo = tranit_cost.source_geo(+)
+        and lane_3zip.dest_geo = tranit_cost.dest_geo(+)
+    order by source
+      , dest
     ) lane_3zip_costed
-    
 where cost.cost = lane_3zip_costed.cost
-and lane_3zip_costed.cost = costtier.cost(+)
-and costtier.value >= 10;
+    and lane_3zip_costed.cost = costtier.cost(+)
+    and costtier.value >= 10;
 
 commit;
 
@@ -1433,25 +1536,30 @@ commit;
 insert into  intups_rescost 
 (integration_jobid, category, res, localcost, tieredcost)
 select distinct 'U_30_SRC_DAILY_PART17'
-      ,202 category, u.res, u.cost localcost, ' ' tieredcost
-from rescost r, costtier t, 
-
-    (select distinct c.dest
-  , c.source
-  , c.source
-    ||'->'
-    ||c.dest res
-  , 'LOCAL:RES:'
-    ||c.source
-    ||'->'
-    ||c.dest
-    ||'-202' cost
-from sourcing c
-) u
-    
+  ,202 category
+  , u.res
+  , u.cost localcost
+  , ' ' tieredcost
+from rescost r
+  , costtier t
+  , (select distinct c.dest
+      , c.source
+      , c.sourcing
+        ||'_'
+        || c.source
+        ||'->'
+        ||c.dest res
+      , c.sourcing
+        ||'_'
+        || c.source
+        ||'->'
+        ||c.dest
+        ||'-202' cost
+    from sourcing c
+    ) u
 where u.cost = t.cost
-and u.cost = r.localcost(+)
-and r.localcost is null;
+    and u.cost = r.localcost(+)
+    and r.localcost is null;
 
 commit;
 

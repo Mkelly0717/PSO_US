@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?><displays><display id="19404c26-0150-1000-8004-0a1d2f01e798" type="" style="Table" enable="true">
+	<name><![CDATA[UNMET Demand for Locaitons with a Mandatory Loc and No Sourcing]]></name>
+	<description><![CDATA[UNMET Demand for Locaitons with a Mandatory Loc and No Sourcing]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+		<TYPE>horizontal</TYPE>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[SELECT "Demand_Location", "Demand_Item", "Total_Demand" FROM(
+SELECT * FROM "SCPOMGR"."UDV_DEMAND_NO_MANDLOC_SRC"
+)]]></sql>
+	</query>
+</display>
+</displays>

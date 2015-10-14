@@ -1,0 +1,54 @@
+select item
+  , dest
+  ,sourcing
+  , count(1)
+from sourcing s
+where s.dest='4000063670'
+    and s.item='4055RUCUST'
+group by item
+  , dest
+  ,sourcing
+order by item
+  , dest
+  , sourcing asc;
+with lanes as
+    (select item
+      , dest
+      , source
+      , count(1)
+    from sourcing s
+    where s.dest='4000063670'
+        and s.item='4055RUCUST'
+    group by item
+      , dest
+      , source
+    order by item
+      , dest
+      , source
+    )
+select lanes.source
+  , lanes.dest
+  , lanes.item
+  , ls.loc
+  , ls.loc_type
+  , ls.postalcode
+  , ld.loc_type
+  , ld.postalcode
+  , ct.source_pc
+  , ct.dest_pc
+  , ct.cost_pallet
+  , CT.DISTANCE
+  , sourcing
+from lanes lanes
+  , loc ld
+  , loc ls
+  , UDT_COST_TRANSIT CT
+  , sourcing sg
+where lanes.dest=ld.loc
+    and lanes.source=ls.loc
+    and ls.postalcode=ct.source_pc
+    AND LD.POSTALCODE=DEST_PC
+    AND SG.ITEM=LANES.ITEM
+    AND SG.DEST=LANES.DEST
+    and sg.source=lanes.source
+order by cost_pallet asc

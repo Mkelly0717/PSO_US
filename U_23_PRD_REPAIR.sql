@@ -79,7 +79,7 @@ insert into igpmgr.intins_bom
 select 'U_23_PRD_REPAIR_PART4' 
      ,u.item, u.loc, u.bomnum, u.subord, u.drawqty
      ,TO_DATE('01/01/197000:00','MM/DD/YYYYHH24:MI') eff
-     ,TO_DATE('01/01/1970','MM/DD/YYYY') disc, 0 offset
+     ,v_init_eff_date disc, 0 offset
      ,100 mixfactor, 100 yieldfactor, 0 shrinkagefactor, 2 drawtype
      ,0 explodesw, 0 unitconvfactor, 1 enablesw, ' ' ecn, 0 supersedesw
      ,''ff_trigger_control, 18 qtyuom, 0 qtyperassembly
@@ -331,32 +331,52 @@ commit;
 
 insert into igpmgr.intins_costtier (integration_jobid, breakqty, category, value, eff, cost)
 
-select distinct 'U_23_PRD_REPAIR_PART10', 
-                0 breakqty, 303 category, q.unit_cost value , v_init_eff_date eff, c.cost  
-from cost c, costtier t, 
-
-    (select s.item, s.matcode, s.loc, s.productionmethod, s.stepnum, s.res, s.cost, nvl(u.unit_cost, 99) unit_cost
-    from
-
-        (select s.item, i.u_materialcode matcode, s.loc, s.productionmethod, s.stepnum, s.res, 'LOCAL:RES:REPCST@'||s.loc||'-202' cost
-        from productionstep s, item i
+select distinct 'U_23_PRD_REPAIR_PART10'
+  , 0 breakqty
+  , 303 category
+  , q.unit_cost value
+  , v_init_eff_date eff
+  , c.cost
+from cost c
+  , costtier t
+  , (select s.item
+      , s.matcode
+      , s.loc
+      , s.productionmethod
+      , s.stepnum
+      , s.res
+      , s.cost
+      , nvl(u.unit_cost, repair_cost.numval1) unit_cost
+    from udt_default_parameters repair_cost
+      , (select s.item
+          , i.u_materialcode matcode
+          , s.loc
+          , s.productionmethod
+          , s.stepnum
+          , s.res
+          , 'LOCAL:RES:REPCST@'
+            ||s.loc
+            ||'-202' cost
+        from productionstep s
+          , item i
         where s.productionmethod = 'REP'
-        and s.stepnum = 2
-        and s.item = i.item
-        ) s,
-
-        (select loc, matcode, process productionmethod, unit_cost
+            and s.stepnum = 2
+            and s.item = i.item
+        ) s
+      , (select loc
+          , matcode
+          , process productionmethod
+          , unit_cost
         from udt_cost_unit
         where process = 'REP'
         ) u
-        
     where s.matcode = u.matcode(+)
-    and s.loc = u.loc(+)
-    and s.productionmethod = u.productionmethod(+)
+        and s.loc = u.loc(+)
+        and s.productionmethod = u.productionmethod(+)
+        and repair_cost.name='REPAIR_COST'
     ) q
-
 where c.cost = q.cost
-and c.cost = t.cost(+)
+    and c.cost = t.cost(+)
 and t.cost is null;
 
 commit;

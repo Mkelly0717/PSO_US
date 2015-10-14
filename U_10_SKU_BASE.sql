@@ -12,8 +12,8 @@ insert into igpmgr.intins_item
 (integration_jobid, item, descr, uom, defaultuom, u_materialcode
     , u_qualitybatch, u_stock
 )
-select 'U_10_SKU_BASE_PART1' 
-    ,y.item, ' ' descr, ' ' uom, 18 defaultuom, substr(y.item, 1, 5) u_materialcode
+SELECT 'U_10_SKU_BASE_PART1' 
+    ,y.item, ' ' descr, ' ' uom, 18 defaultuom, substr(y.item, 1, 4) u_materialcode
     ,substr(y.item, 5, 55) u_qualitybatch, 
     case when substr(y.item, -2) = 'AR' then 'B'
             when substr(y.item, -2) = 'AI' then 'A' else 'C' end u_stock
@@ -240,7 +240,7 @@ from
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
         from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
         where f.startdate 
-                between v_demand_start_date and v_demand_start_date + phdays.numval1
+                 between v_demand_start_date and v_demand_start_date + phdays.numval1
         and l.u_area = 'NA'
         and l.loc_type = 3 
         and l.enablesw = 1 
@@ -302,7 +302,7 @@ from
         and f.loc = l.loc  
         and f.qty > 0
         and f.dmdunit = v.dmdunit
-        and f.fmdgroup like ('%TPM%')
+        and f.dmdgroup like ('%TPM%')
         and f.dmdgroup = v.dmdgroup
         and f.loc = v.loc
         and v.u_dfulevel = 0
@@ -376,7 +376,7 @@ from sku s, item i, loc l,
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v, udt_default_parameters phdays
-    where f.startdate
+    where f.startdate 
                 between v_demand_start_date and v_demand_start_date + phdays.numval1
     and f.dmdgroup in ('ISS', 'COL')
     and f.dmdunit = v.dmdunit
@@ -392,7 +392,7 @@ where f.item = s.item
 and f.skuloc = s.loc
 and f.item = i.item
 and i.u_stock in ('A', 'C')
-and i.enable=1
+and i.enablesw=1
 and f.skuloc = l.loc
 and l.loc_type = 3
 and l.u_area = 'NA'

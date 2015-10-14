@@ -13,18 +13,19 @@
  {
 
      if (NR == 1) { 
-         print $1, $2, $7, $8, $13, $14, $15 "\r"
+         print $1, $2, $6, $7, $12, $13, $14 "\r"
          getline 
      } 
-     item = $1; priority=$14; transleadtime=$15
+     item = $1; priority=$12; transleadtime=$13, equipment_type=$14
      gsub ("^0*", "", item); gsub ("-", "", item); gsub (" ", "", item)
      if ( item =="4001AI" ) {
-          source=$8; source_zip=$13
-          dest=$2  ; dest_zip=$7
+          source=$7; source_zip=$13
+          dest=$2  ; dest_zip=$6
      }
      else {
-           source=$2; source_zip=$7
-           dest=$8  ; dest_zip=$13
+           source=$2; source_zip=$6
+           dest=$7  ; dest_zip=$11
      }
-     print item, source,source_zip,dest,dest_zip,priority,transleadtime "\r"
+     print item, source,source_zip,dest,dest_zip,priority,transleadtime,
+           equipment_type "\r"
  }

@@ -102,7 +102,7 @@ from bom b, sku s, sku ss, loc l,
  -- this 2nd part of union is for INS production method which has no B stock yield; only C stock
     ) u
 
-where u.loc = l.loc
+where u.loc = l.loc 
 and l.loc_type in (2, 4)
 and u.item = s.item
 and u.loc = s.loc
@@ -113,8 +113,14 @@ and ss.enablesw = 1
 and u.item <> u.subord
 and u.item = b.item(+)
 and u.loc = b.loc(+)
-and u.subord = b.subord(+)
-and u.bomnum = b.bomnum(+)      
+AND U.SUBORD = B.SUBORD(+)
+AND U.BOMNUM = B.BOMNUM(+)
+AND EXISTS ( SELECT 1
+               FROM UDT_PLANT_STATUS PS
+              WHERE PS.LOC=L.LOC
+                AND PS.RES='SORT'
+                AND PS.STATUS=1
+            )
 and b.item is null;
 
 commit;
@@ -176,7 +182,7 @@ select 'U_22_PRD_INSPECT_PART3'
        ,1 levelseqnum, ' ' criticalitem, 1 checkmaxcap, 0 unitpenalty
        ,1 adjfactor, ' ' source, 1 enablesw, 1 subtype, u.qtyuom
        ,15 currencyuom, 0 productionfamilychgoveropt
-from res r, 
+from res r, loc l,
 
     (select distinct 'INSCAP'||'@'||s.loc res, s.loc, 4 type, 28 qtyuom
     from sku s, loc l, item i
@@ -194,8 +200,8 @@ from res r,
                   ||'@'
                   ||s.loc res
                   ,s.loc, 4 type, 18 qtyuom
-    from sku s, loc l, item i
-    where s.loc = l.loc
+    FROM SKU S, LOC L, ITEM I
+    where s.loc = l.loc 
     and l.loc_type in ( 2, 4)
     and l.enablesw = 1
     and s.enablesw = 1
@@ -203,7 +209,23 @@ from res r,
     and i.u_stock <> 'A'
     ) u
     
-where u.loc = r.loc(+)
+WHERE U.LOC = L.LOC
+  and exists
+(select 1
+from udt_plant_status ps
+where ps.loc=l.loc
+    and ps.res='SORT'
+    and ps.status=1
+)
+  and exists
+(select 1
+from udt_yield y
+where y.loc=l.loc
+    and y.yield > 0
+    and y.maxcap>0
+)
+and l.u_area = 'NA'
+and u.loc = r.loc(+)
 and u.res = r.res(+)
 and r.res is null;
 
@@ -246,13 +268,18 @@ where pm.loc = l.loc
 and l.loc_type in (2, 4)
 and (r.res = 'INSCST'
              ||'@'
-             ||lpad(i.u_materialcode, 2, '0')
              ||pm.loc  or r.res = 'INSCAP'
              ||'@'
-             ||lpad(i.u_materialcode, 2, '0')
              ||pm.loc
     )
-and r.loc = pm.loc
+AND R.LOC = PM.LOC
+  and exists
+(select 1
+from udt_plant_status ps
+where ps.loc=l.loc
+    and ps.res='SORT'
+    and ps.status=1
+)
 and r.enablesw = 1
 and pm.enablesw = 1
 and pm.item = u.item
@@ -260,7 +287,7 @@ and pm.loc = u.loc
 and pm.item = i.item
 and pm.productionmethod = 'INS'
 and pm.item = ps.item(+)
-and pm.loc = ps.loc(+)
+AND PM.LOC = PS.LOC(+)
 and pm.productionmethod = ps.productionmethod(+)
 and ps.item is null;
 
@@ -293,7 +320,7 @@ from productionyield y, sku so, loc l,
         union
         
         select y.item, y.loc, y.yield, y.matcode
-        from udt_yield y, item i
+        FROM UDT_YIELD Y, ITEM I
         where y.item = i.item
         and y.productionmethod = 'INS'
         and i.u_stock in ('B', 'C')
@@ -301,7 +328,7 @@ from productionyield y, sku so, loc l,
         and y.yield > 0
         and y.item||y.loc not in (select item ||loc 
                                     from bom 
-                                   where bomnum = 1)
+                                   WHERE BOMNUM = 1)
         ) u
 
     where b.item = i.item
@@ -313,12 +340,18 @@ from productionyield y, sku so, loc l,
     and pm.productionmethod = 'INS'
      )p
 
-where p.loc = l.loc
+WHERE P.LOC = L.LOC 
+AND EXISTS ( SELECT 1
+               FROM UDT_PLANT_STATUS PS
+              WHERE PS.LOC=L.LOC
+                AND PS.RES='SORT'
+                AND PS.STATUS=1
+            )
 and l.loc_type in ( 2, 4)
 and so.item = p.outputitem
 and so.loc = p.loc
 and p.item = y.item(+)
-and p.loc = y.loc(+)
+AND P.LOC = Y.LOC(+)
 and p.productionmethod = y.productionmethod(+)
 and y.item is null;
 
@@ -358,14 +391,14 @@ insert into igpmgr.intins_costtier
 (  integration_jobid, breakqty, category, value, eff, cost )
 
 select distinct 'U_22_PRD_INSPECT_PART7'
-         ,0 breakqty, 303 category, nvl(q.unit_cost, 99) value
+         ,0 breakqty, 303 category, q.unit_cost value
          ,v_init_eff_date eff, c.cost  
   
 from cost c, costtier t, 
 
-    (select s.item, s.matcode, s.loc, s.productionmethod, s.stepnum
-           ,s.res, s.cost, nvl(u.unit_cost, 99) unit_cost
-    from
+    (SELECT S.ITEM, S.MATCODE, S.LOC, S.PRODUCTIONMETHOD, S.STEPNUM
+           ,S.RES, S.COST, NVL(U.UNIT_COST, INSPECT_COST.NUMVAL1) UNIT_COST
+    from udt_default_parameters inspect_cost,
 
         (select s.item, i.u_materialcode matcode, s.loc, s.productionmethod
                ,s.stepnum, s.res, 'LOCAL:RES:INSCST@'
@@ -384,7 +417,8 @@ from cost c, costtier t,
         
     where s.matcode = u.matcode(+)
     and s.loc = u.loc(+)
-    and s.productionmethod = u.productionmethod(+)
+    AND S.PRODUCTIONMETHOD = U.PRODUCTIONMETHOD(+)
+    and inspect_cost.name='INSPECTION_COST'
     ) q
 
 where c.cost = q.cost

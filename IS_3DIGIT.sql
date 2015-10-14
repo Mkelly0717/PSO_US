@@ -8,7 +8,8 @@ is
 v_number number :=0;
 BEGIN
   
-  if ( regexp_like( Zip_Code, '[0-9][0-9][0-9]')) then
+  If (     Length(Zip_Code) = 3
+       and regexp_like( Zip_Code, '[0-9][0-9][0-9]')) then
      v_number := 1;
   else 
      v_number := 0;
@@ -17,5 +18,5 @@ BEGIN
   return v_number;
 
   exception
-    when others then return 0;
+    When Others Then Return 0;
 END IS_3DIGIT;

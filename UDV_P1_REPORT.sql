@@ -51,6 +51,7 @@
       ,dest_pc
       ,transleadtime
       ,priority
+      ,u_equipment_type
     from udt_llamasoft_data
     )
 select sysdate
@@ -77,6 +78,7 @@ where ls.dest=l.loc
     and l.u_equipment_type=ct.u_equipment_type
     and ls.source_pc=ct.source_pc
     and ls.dest_pc = ct.dest_pc
+    and ls.u_equipment_type=ct.u_equipment_type
     and ls.source=sm.src
     and ls.dest=sm.dest
     and ls.item=sm.item

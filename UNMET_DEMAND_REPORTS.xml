@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8" ?><displays><folder>
+	<name><![CDATA[UNMET Demand Reports]]></name>
+	<tooltip><![CDATA[]]></tooltip>
+	<description><![CDATA[Series of Reports about any UnMet Demand]]></description>
+		<display id="19404c26-0150-1000-8004-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[UNMET Demand for Locaitons with a Mandatory Loc and No Sourcing]]></name>
+		<description><![CDATA[UNMET Demand for Locaitons with a Mandatory Loc and No Sourcing]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "Demand_Location", "Demand_Item", "Total_Demand" FROM(
+SELECT * FROM "SCPOMGR"."UDV_DEMAND_NO_MANDLOC_SRC"
+)]]></sql>
+		</query>
+	</display>
+	<display id="8599a530-014f-1000-8017-0a1d2f01744e" type="" style="Table" enable="true">
+		<name><![CDATA[Customers with Demand Report]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[null]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "RPT#", "NLOCS", "COUNT(1)" FROM(
+with customers_with_demand as   
+(select distinct sc.loc, l.postalcode, l.u_3digitzip, sc.category 
+   From Skuconstraint Sc, Loc L  
+   where sc.category in (1,10) 
+    and sc.eff >= sysdate - 8  
+    and sc.loc=l.loc  
+    and l.loc_type=3  
+    and l.u_area='NA' 
+    and l.country='US' 
+)  
+select '1' as Rpt#, 
+       '#Customers with Demand' as NLocs, 
+       count(1)  
+from customers_with_demand cwd 
+union 
+select '2' as Rpt#, 
+       '#Customers with Bad 5 Digit Zip' as NLocs, 
+       count(1)  
+From Customers_With_Demand Cwd 
+where is_5digit(cwd.postalcode) = 0
+union 
+select '3' as Rpt#, 
+       '#Customers with Bad 3 Digit Zip' as NLocs, 
+       count(1)  
+From Customers_With_Demand Cwd 
+where is_3digit(cwd.u_3digitzip) = 0 
+union 
+Select '4' As Rpt#, 
+       '#ISSUE Customers W/O DEST_PC IN COST TRANSIT' as NLocs, 
+       count(1) 
+From  Customers_With_Demand Cwd 
+Where Cwd.Category=1
+        And Not Exists 
+            ( select 1 
+               from udt_cost_transit ct 
+              Where Ct.Dest_Pc=Cwd.Postalcode
+             )
+Union 
+Select '4B' As Rpt#, 
+       '#Collection Customers W/O DEST_PC IN COST TRANSIT' as NLocs, 
+       count(1) 
+From  Customers_With_Demand Cwd 
+Where Cwd.Category=10
+        And Not Exists 
+            ( select 1 
+               From Udt_Cost_Transit Ct 
+              Where Ct.source_Pc=Cwd.Postalcode
+             )
+union 
+Select '5' As Rpt#, 
+       '#ISSUE Customers W/O DEST_GEO IN COST TRANSIT' as NLocs, 
+       count(1) 
+From  Customers_With_Demand Cwd 
+Where Cwd.Category=1
+  and not exists ( select 1 
+                     from udt_cost_transit ct 
+                    where ct.dest_geo=cwd.u_3digitzip 
+                  ) 
+Union
+Select '5B' As Rpt#, 
+       '#Collection Customers W/O DEST_GEO IN COST TRANSIT' as NLocs, 
+       count(1) 
+From  Customers_With_Demand Cwd 
+Where Cwd.Category=10
+  and not exists ( select 1 
+                     From Udt_Cost_Transit Ct 
+                    where ct.source_geo=cwd.u_3digitzip 
+                  ) 
+Union 
+select '6-??' as Rpt#, 
+       '#Customers With Invalid Equipment Type' as NLocs, 
+       count(1) 
+From  Customers_With_Demand Cwd 
+Where Cwd.Category=1
+  and not exists ( select 1 
+                     from udt_cost_transit ct 
+                    where ct.dest_geo=cwd.u_3digitzip 
+                  ) 
+ 
+Union 
+select '7-??' as Rpt#, 
+       '#Customers With Invalid Equipment Type' as NLocs, 
+       count(1) 
+from  customers_with_demand cwd 
+where not exists ( select 1 
+                     from udt_cost_transit ct 
+                    where ct.dest_geo=cwd.u_3digitzip 
+                  ) 
+Union 
+select '8-??' as Rpt#, 
+       '#Postal Codes With No dest_PC in Cost Transit' as NLocs, 
+       count(1) 
+from  customers_with_demand cwd 
+where not exists (select 1  
+                    from udt_cost_transit ct 
+                   where ct.dest_pc = cwd.postalcode 
+                  ) 
+order by RPT# asc
+)]]></sql>
+		</query>
+	</display>
+	<display id="1948daaf-0150-1000-8005-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[Demand_Without_Sourcing_Records]]></name>
+		<description><![CDATA[This is a list of all demand from SkuConstaint(Category 1) For which No Sourcing Recods Exist]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[null]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "ITEM", "DEST", "TOTALDEMAND", "TOTALMET", "DELTA", "SOURCING" FROM(
+SELECT * FROM "SCPOMGR"."UDV_DEMAND_NO_SOURCING"
+)]]></sql>
+		</query>
+	</display>
+	<display id="19711559-0150-1000-800c-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[List Locations Invalid vwith 3 Digit Postal Code]]></name>
+		<description><![CDATA[A list of all invalid(non-numberic) no 3 digit US postal codes from the location table]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[null]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "LOC", "POSTALCODE", "U_3DIGITZIP", "CATEGORY" FROM(
+select distinct sc.loc, l.postalcode, l.u_3digitzip, sc.category  
+   from skuconstraint sc, loc l   
+   where sc.category in (1,10)
+    and sc.eff >= sysdate - 8   
+    and sc.loc=l.loc   
+    and l.loc_type=3   
+    And L.U_Area='NA'  
+    And L.Country='US'  
+    and is_3digit(u_3digitzip) = 0
+    order by category asc, loc asc
+)]]></sql>
+		</query>
+	</display>
+	<display id="196b0ea1-0150-1000-800a-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[List Invalid 5 Digit Postal Codes]]></name>
+		<description><![CDATA[A list of all invalid(non-numberic) no 5 digit US postal codes from the location table which have Demand for Issues and Collections.]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[null]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "LOC", "POSTALCODE", "U_3DIGITZIP" , "CATEGORY" FROM(
+select distinct sc.loc, l.postalcode, l.u_3digitzip, sc.category  
+   from skuconstraint sc, loc l   
+   where sc.category in (1,10)  
+    and sc.eff >= sysdate - 8   
+    and sc.loc=l.loc   
+    and l.loc_type=3   
+    And L.U_Area='NA'  
+    And L.Country='US'  
+    and Is_5digit(Postalcode) = 0
+    order by category asc, loc asc
+)]]></sql>
+		</query>
+	</display>
+	<display id="19847cf9-0150-1000-8012-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[List Demand Locations With No 5 Digit Cost Transit]]></name>
+		<description><![CDATA[List Demand Locations With No 5 Digit Cost Transit US category 1 or 10]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[null]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "LOC", "POSTALCODE", "U_3DIGITZIP", "CATEGORY" FROM(
+select distinct sc.loc, l.postalcode, l.u_3digitzip, sc.category  
+   From Skuconstraint Sc, Loc L   
+   where sc.category in (1,10)   
+    and sc.eff >= sysdate - 8   
+    and sc.loc=l.loc   
+    and l.loc_type=3   
+    And L.U_Area='NA'  
+    And L.Country='US'  
+    and not exists ( select 1  
+                     From Udt_Cost_Transit Ct  
+                    Where Ct.Dest_Pc=L.Postalcode 
+                      And Sc.Category=1 
+                  )  
+    and not exists ( select 1  
+                     From Udt_Cost_Transit Ct  
+                    Where Ct.source_Pc=L.Postalcode 
+                      And Sc.Category=10 
+                  ) 
+order by category asc, loc asc
+)]]></sql>
+		</query>
+	</display>
+	<display id="1a7c48d1-0150-1000-801c-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[Number of Glids Shipped to By Plant and item]]></name>
+		<description><![CDATA[For each plant and item, return the number of glids that where shipped too.]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "SOURCE", "ITEM", "NDESTS" FROM(
+Select Source,item, Count( Unique Dest ) NDESTS
+From Sourcingmetric Sm, loc l, loc l1
+Where Value > 0
+  And Sm.Source=L.Loc
+  And L.Loc_Type In (2)
+  And Sm.Dest=L1.Loc
+  And L1.Loc_Type=3
+Group By Source, Item 
+order by source asc, item asc
+)]]></sql>
+		</query>
+	</display>
+	<display id="1a7c9451-0150-1000-801d-0a1d2f01e798" type="" style="Table" enable="true">
+		<name><![CDATA[Number of Unique Destinaitons used for Stock transfers]]></name>
+		<description><![CDATA[Number of Unique Destinaitons used for Stock transfers]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE>horizontal</TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[SELECT "SOURCE", "ITEM", "LOC_TYPE", "NUMBERDESTS" FROM(
+Select Source,Item, L.Loc_Type, Count( Unique Dest ) NumberDests
+From Sourcingmetric Sm, loc l, loc l1
+Where Value > 0
+  And Sm.Source=L.Loc
+  And L.Loc_Type In (1,2,4,5)
+  And Sm.Dest=L1.Loc
+  And L1.Loc_Type in (1,2,4,5)
+Group By Source, Item, l.loc_type 
+order by source asc, item asc
+)]]></sql>
+		</query>
+	</display>
+</folder>
+</displays>

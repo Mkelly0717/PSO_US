@@ -139,4 +139,91 @@ and r.res is null;
 
 commit;
 
+/******************************************************************
+** Part 7: create storage maximum capacity constraints - need to agree upon design 
+and create UDT and enroll, (rather than tmp_ table)  
+******************************************************************/
+
+delete resconstraint  where substr(res, 1, 7)  in ('STORAGE');
+
+commit;
+
+insert
+into igpmgr.intins_resconstraint
+    (
+        integration_jobid
+      , eff
+      , policy
+      , qty
+      , dur
+      , category
+      , res
+      , qtyuom
+      , timeuom
+    )
+select 'U_11_SKU_STORAGE_PART7'
+  ,u.eff
+  , 1 policy
+  , u.qty*1*1 qty
+  , 1440 *7*1 dur
+  , u.category
+  ,u.res
+  , 18 qtyuom
+  , 0 timeuom --need to factor not by 5 days per week
+from resconstraint c
+  , (select r.res
+      , r.loc
+      , t.maxcap qty
+      , v_init_eff_date eff
+      , 12 category
+    from tmp_storage_capacity t
+      , res r
+    where t.loc = r.loc
+        and r.type = 9
+    ) u
+where u.res = c.res(+)
+    and u.eff = c.eff(+)
+    and u.category = c.category(+)
+    and c.res is null
+order by u.res
+  , u.eff;
+
+
+commit;
+
+/******************************************************************
+** Part 8: Assign Resource Penalty                               * 
+******************************************************************/
+delete respenalty  where substr(res, 1, 7)  in ('STORAGE');
+
+commit;
+
+insert
+into igpmgr.intins_respenalty
+    (
+        integration_jobid
+      , eff
+      , rate
+      , category
+      , res
+      , currencyuom
+      , qtyuom
+      , timeuom
+    )
+select 'U_11_SKU_STORAGE_PART8'
+  ,v_init_eff_date eff
+  , 1200 rate
+  , 112 category
+  , r.res
+  , 11 currencyuom
+  , 18 qtyuom
+  , 0 timeuom
+from res r
+  , (select distinct res from resconstraint
+    ) u
+where r.res = u.res
+    and r.type = 9;
+
+commit;
+
 end;

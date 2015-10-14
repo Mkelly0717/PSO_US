@@ -111,11 +111,18 @@ and u.subord = ss.item
 and u.loc = ss.loc
 and s.enablesw = 1
 and ss.enablesw = 1
-and u.item <> u.subord
+AND U.ITEM <> U.SUBORD
+AND EXISTS ( SELECT 1
+               FROM UDT_PLANT_STATUS PS
+              WHERE PS.LOC=U.LOC
+                AND PS.RES='HEATTREAT'
+                AND PS.STATUS=1
+            )
 and u.item = b.item(+)
 and u.loc = b.loc(+)
 and u.subord = b.subord(+)
-and u.bomnum = b.bomnum(+)and b.item is null;
+and u.bomnum = b.bomnum(+)
+and b.item is null;
 
 commit;
 
@@ -183,7 +190,13 @@ from res r,
     ) u
     
 where u.loc = r.loc(+)
-and u.res = r.res(+)
+AND U.RES = R.RES(+)
+AND EXISTS ( SELECT 1
+               FROM UDT_PLANT_STATUS PS
+              WHERE PS.LOC=U.LOC
+                AND PS.RES='HEATTREAT'
+                AND PS.STATUS=1
+            )
 and r.res is null;
 
 commit;
@@ -231,6 +244,12 @@ and b.item = s.item
 and b.loc = s.loc 
 and b.item = p.item(+)
 and b.loc = p.loc(+)
+and exists ( select 1
+               from udt_plant_status ps
+              where ps.loc=B.loc
+                and ps.res='HEATTREAT'
+                and ps.status=1
+            )
 and p.item is null;
 
 commit;
@@ -286,6 +305,12 @@ and pm.productionmethod = 'HTR'
 and pm.item = ps.item(+)
 and pm.loc = ps.loc(+)
 and pm.productionmethod = ps.productionmethod(+)
+and exists ( select 1
+               from udt_plant_status ps
+              where ps.loc=pm.loc
+                and ps.res='HEATTREAT'
+                and ps.status=1
+            )
 and ps.item is null;
 
 commit;
@@ -301,12 +326,26 @@ insert into igpmgr.intins_prodyield
 )
 
 select 'U_25_PRD_HEAT_PART8'
-       ,p.item, p.loc, p.productionmethod, v_init_eff_date eff
-       ,18 qtyuom , p.item outputitem, 1 yieldqty 
-from productionyield y, productionmethod p
-where p.item = y.item(+)
-and p.loc = y.loc(+)
-and p.productionmethod = y.productionmethod(+)
+  ,p.item
+  , p.loc
+  , p.productionmethod
+  , v_init_eff_date eff
+  ,18 qtyuom
+  , p.item outputitem
+  , 1 yieldqty
+from productionyield y
+  , productionmethod p
+where p.productionmethod='HTR'
+    and exists
+    (select 1
+    from udt_plant_status ps
+    where ps.loc=p.loc
+        and ps.res='HEATTREAT'
+        and ps.status=1
+    )
+    and p.item = y.item(+)
+    and p.loc = y.loc(+)
+    and p.productionmethod = y.productionmethod(+)
 and y.item is null;
 commit;
 
@@ -321,20 +360,32 @@ insert into igpmgr.intins_cost
 )
 
 select distinct 'U_25_PRD_HEAT_PART9'
-                ,u.cost, 1 enablesw, 0 cumulativesw, 0 groupedsw
-                ,0 sharedsw, 18 qtyuom, 11 currencyuom, ' '   accumcal
-                ,0 maxqty, 0 maxutilization
-from cost c, 
-
-    (select 'LOCAL:RES:'
-                      ||res
-                      ||'-202' cost
-      from res
-     where subtype = 1
-    and substr(res, 1, 6) = 'HTRCST'
+  ,u.cost
+  , 1 enablesw
+  , 0 cumulativesw
+  , 0 groupedsw
+  ,0 sharedsw
+  , 18 qtyuom
+  , 11 currencyuom
+  , ' ' accumcal
+  ,0 maxqty
+  , 0 maxutilization
+from cost c
+  , (select 'LOCAL:RES:'
+        ||res
+        ||'-202' cost
+    from res
+    where subtype = 1
+        AND SUBSTR(RES, 1, 6) = 'HTRCST'
+            and exists
+    (select 1
+    from udt_plant_status ps
+    where ps.loc=loc
+        and ps.res='HEATTREAT'
+        AND PS.STATUS=1
+    )
     ) u
-    
-where u.cost = c.cost(+)
+WHERE U.COST = C.COST(+)
 and c.cost is null;
 commit;
 
@@ -350,9 +401,9 @@ select distinct 'U_25_PRD_HEAT_PART10', 0 breakqty, 303 category
   
 from cost c, costtier t, 
 
-    (select c.cost, nvl(q.unit_cost, 0.0001) unit_cost
+    (select c.cost, nvl(q.unit_cost, inspect_heat.numval1) unit_cost
 
-    from cost c,
+    from cost c, udt_default_parameters inspect_heat,
 
         (select matcode, loc, process, unit_cost 
            from udt_cost_unit 
@@ -371,6 +422,7 @@ from cost c, costtier t,
     and r.res = substr(c.cost, 11, length(c.cost)-4-10)
     and r.loc = q.loc(+)
     and r.matcode = q.matcode(+)
+    and inspect_heat.name='HEATTREAT_COST'
     ) q
 
 where c.cost = q.cost

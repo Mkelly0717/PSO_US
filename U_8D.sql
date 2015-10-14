@@ -17,4 +17,6 @@ u_8d_productionmethod;
 
 u_8d_sku;
 
+u_8d_deletecosttables;
+
 end;
