@@ -37,9 +37,6 @@ execute immediate 'truncate table sourcingproj';
 
 execute immediate 'truncate table sourcingrequirement';
 
---U_TMP_DELETE_RES;
---delete res where type = 5 and res <> ' ';
-
 commit;
 
 delete sourcing;

@@ -47,18 +47,20 @@ LOOP
 end loop;
 commit;
 
---loop
---    delete from scpomgr.res where rownum < 25000;
---    exit when sql%rowcount < 24999;
---    commit;
---end loop;
---commit;
---
---loop
---    delete from scpomgr.resconstraint where rownum < 25000;
---    exit when sql%rowcount < 24999;
---    commit;
---end loop;
---commit;
+
+loop
+    delete from scpomgr.resconstraint where rownum < 25000;
+    exit when sql%rowcount < 24999;
+    commit;
+end loop;
+commit;
+
+loop
+    delete from scpomgr.res where type <> 4 and rownum < 25000;
+    exit when sql%rowcount < 24999;
+    commit;
+end loop;
+commit;
+
 
 end;

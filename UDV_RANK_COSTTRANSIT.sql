@@ -12,7 +12,6 @@
       ,rank() over (partition by direction, u_equipment_type, dest_pc order by cost_pallet asc) rank
     from udt_cost_transit
     where trim(source_pc) is not null
-    and dest_pc='06249'
     order by direction
       , u_equipment_type
       , dest_pc

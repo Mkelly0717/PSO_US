@@ -4,6 +4,28 @@
 set define off;
 
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_10_SKU_BASE" as
+/* 
+    1: Create Items.
+    2: Create A Stock Sku's.
+    3: Create B Stock Sku's.
+    4: Create C Stock at Storage Locations.
+    5: Create C Stock Sku's at Manufacturing Locations.
+    6: Create C Stock Sku's at Type 2 and 4 plants locaitons.
+    7: Create A and C stock Sku's for Customers with a FCST for AI or RU.
+    8: Create all Items At TPM's (Type = 4) In Weekly CFWD switch is off.
+    9: Create all Sku's at all Source/Dest where plant status file is 1.
+   10: Truncate dfutoskufcst. Create dfutoskufcst for Non RUNEW Items.
+   11: Create dfutoskufcst records for RUNEW where LOC:U_RUNEW_CUST = 1.
+   12: Create dfutoskufcst records for Service Centers.
+   13: Create Cal Records.
+   14: Create CalData Records.
+   15: Create SkuDemandParameter records.
+   16: Create SkuDeployment records.
+   17: Create SkuPlanningParam records.
+   18: Create SkuSafteyStock records.
+   19: Update Sku:OHPOST
+*/
+
 begin
 /******************************************************************
 ** Part 1: Create Items                                           * 
@@ -238,9 +260,9 @@ from
         (select  distinct f.dmdunit item, f.loc, 
             0 infcarryfwdsw
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
-        from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
+        from fcst f, loc l, item i, dfuview v
         where f.startdate 
-                 between v_demand_start_date and v_demand_start_date + phdays.numval1
+                 between v_demand_start_date and next_day(v_demand_end_date,'SAT')
         and l.u_area = 'NA'
         and l.loc_type = 3 
         and l.enablesw = 1 
@@ -254,7 +276,6 @@ from
         and f.dmdgroup = v.dmdgroup
         and f.loc = v.loc
         and v.u_dfulevel = 0
-        and phdays.name='PLAN_HORIZON_DAYS'
         ) f
         
     where f.item = s.item(+)
@@ -290,9 +311,9 @@ from
         (select  distinct f.dmdunit item, f.loc, 
             0 infcarryfwdsw
 --           case when i.u_stock = 'C' then 1 else 0 end infcarryfwdsw
-        from fcst f, loc l, item i, dfuview v, udt_default_parameters phdays
+        from fcst f, loc l, item i, dfuview v
         where f.startdate 
-                between v_demand_start_date and v_demand_start_date + phdays.numval1
+                between v_demand_start_date and next_day(v_demand_end_date,'SAT')
         and l.u_area = 'NA'
         and l.loc_type in (2,4,5)
         and l.enablesw = 1 
@@ -306,7 +327,6 @@ from
         and f.dmdgroup = v.dmdgroup
         and f.loc = v.loc
         and v.u_dfulevel = 0
-        and phdays.name='PLAN_HORIZON_DAYS'
         ) f
         
     where f.item = s.item(+)
@@ -375,16 +395,15 @@ select distinct 'U_10_SKU_BASE_PART10'
 from sku s, item i, loc l, 
 
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v, udt_default_parameters phdays
-    where f.startdate 
-                between v_demand_start_date and v_demand_start_date + phdays.numval1
+    from fcst f, dfuview v
+    where f.startdate between v_demand_start_date 
+                          and next_day(v_demand_end_date,'SAT')
     and f.dmdgroup in ('ISS', 'COL')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
     and f.loc = v.loc
     and v.u_dfulevel = 0
     and f.dmdunit <> '4055RUNEW'
-    and phdays.name='PLAN_HORIZON_DAYS'
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
     ) f
         
@@ -415,9 +434,11 @@ select distinct 'U_10_SKU_BASE_PART11'
     ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i,  
 
-    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v, loc l, udt_default_parameters phdays
-    where f.startdate between v_demand_start_date and v_demand_start_date + phdays.numval1
+    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc
+                   , f.loc skuloc, startdate, dur, 1 type, 0 supersedesw
+                   , ''  ff_trigger_control, sum(qty) totfcst
+    from fcst f, dfuview v, loc l
+    where f.startdate between v_demand_start_date and next_day(v_demand_end_date,'SAT')
     and f.dmdgroup in ('ISS')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
@@ -428,7 +449,6 @@ from sku s, item i,
     and f.dmdunit = '4055RUNEW'
     and l.loc_type = 3
     and l.u_area = 'NA'
-    and phdays.name='PLAN_HORIZON_DAYS'
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
     ) f
         
@@ -456,15 +476,14 @@ from sku s, item i, loc l,
     (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc
               ,f.loc skuloc , startdate, dur, 1 type, 0 supersedesw
               ,''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v, udt_default_parameters phdays
-    where f.startdate between v_demand_start_date and v_demand_start_date + phdays.numval1
+    from fcst f, dfuview v
+    where f.startdate between v_demand_start_date and next_day(v_demand_end_date,'SAT')
     and f.dmdgroup in ('TPM')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
     and f.loc = v.loc
     and v.u_dfulevel = 0
     and f.dmdunit <> '4055RUNEW'
-    and phdays.name='PLAN_HORIZON_DAYS'
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
     ) f
         

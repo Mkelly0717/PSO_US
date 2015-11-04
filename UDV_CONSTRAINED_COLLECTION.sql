@@ -3,18 +3,21 @@
 --------------------------------------------------------
 
   CREATE OR REPLACE VIEW "SCPOMGR"."UDV_CONSTRAINED_COLLECTION" ("LOC", "QTY") AS 
-  select distinct LOC,SUM (QTY) QTY 
-from skuconstraint k
-where K.category = '10'
-  and not exists ((select LOC 
-                     from UDT_FIXED_COLL T 
-                    where K.LOC=T.LOC
-                  )
-                  union 
-                  (select LOC 
-                     from UDT_DEFAULT_ZIP Z 
-                    where K.LOC=Z.LOC
-                   )
-                  )
-group by LOC
-having SUM(QTY) >0
+  select distinct nvl(loc, 'Coll Qty Demand') loc
+      ,sum (qty) qty
+    from skuconstraint k
+    where k.category = '10'
+        and k.qty > 0
+        and not exists (
+        (select '1' from udt_fixed_coll t where k.loc=t.loc
+        )
+    union
+        (select '1'
+        from udt_default_zip z
+          , loc l
+        where l.loc=k.loc
+            and l.postalcode = z.postalcode
+        ) )
+    group by rollup(loc)
+    having sum(qty) >0
+    order by 2 desc

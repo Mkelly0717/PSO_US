@@ -180,6 +180,20 @@ from res r,
     
 where u.loc = r.loc(+)
 and u.res = r.res(+)
+--  and exists
+--(select 1
+--from udt_plant_status ps
+--where ps.loc=u.loc
+--    and ps.res='SORT'
+--    and ps.status=1
+--)
+--  and exists
+--(select 1
+--from udt_yield y
+--where y.loc=u.loc
+--    and y.yield > 0
+--    and y.maxcap>0
+--)
 and r.res is null;
 
 commit;

@@ -2,7 +2,7 @@
 --  DDL for View UDV_SKUCONSTR_SRC_ALL
 --------------------------------------------------------
 
-  CREATE OR REPLACE VIEW "SCPOMGR"."UDV_SKUCONSTR_SRC_ALL" ("ITEM", "LOC", "TOTALDEMAND", "TOTALSRC", "LOC_TYPE", "POSTALCODE", "U_3DIGITZIP", "COUNTRY", "U_AREA") AS 
+  CREATE OR REPLACE VIEW "SCPOMGR"."UDV_SKUCONSTR_SRC_ALL" ("ITEM", "LOC", "TOTALDEMAND", "TOTALSRC", "LOC_TYPE", "POSTALCODE", "U_3DIGITZIP", "COUNTRY", "U_AREA", "U_MAX_SRC", "U_MAX_DIST", "ENABLESW") AS 
   with total_demand ( item, loc, totaldemand) as
     (select skc.item
       ,skc.loc
@@ -37,12 +37,15 @@
 select td.item
   , td.loc
   , td.totaldemand
-  , TS.TOTALSRC
+  , ts.totalsrc
   , l.loc_type
   , l.postalcode
   , l.u_3digitzip
   , l.country
   , l.u_area
+  , l.u_max_src
+  , l.u_max_dist
+  , l.enablesw
 from total_demand td
   , total_src ts
   , loc l

@@ -1,5 +1,9 @@
-create or replace view udv_resource_util_new as
-WITH INFO AS (   
+--------------------------------------------------------
+--  DDL for View UDV_RESOURCE_UTIL_NEW
+--------------------------------------------------------
+
+  CREATE OR REPLACE VIEW "SCPOMGR"."UDV_RESOURCE_UTIL_NEW" ("RES", "N", "TOTAL", "AVG_UTIL", "MY_AVG_CALC") AS 
+  WITH INFO AS (   
    SELECT  RC.RES, RC.EFF, CASE
                              WHEN RM.VALUE > 0 THEN RC.QTY/RM.VALUE
                              ELSE 0

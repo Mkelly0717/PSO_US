@@ -12,7 +12,19 @@ set define off;
    U_30_SRC_DAILY_PART3B: Find Closest 3zip Lane over max Dist
    U_30_SRC_DAILY_PART4:  Create RU SKU'S at the MFG Locaitons
    U_30_SRC_DAILY_PART5:  Allow sourcing from MFG if substitution is allowed.
-   U_30_SRC_DAILY_PART6:
+   U_30_SRC_DAILY_PART6:  Collections based on UDT_FIXED_COLL.
+   U_30_SRC_DAILY_PART7:  Collections based UDT_DEFAULT_ZIP.
+   U_30_SRC_DAILY_PART8:  TPM relocations.
+   U_30_SRC_DAILY_PART9:  Update Sourcing Min LeadTime.
+   U_30_SRC_DAILY_PART10: Add Sourcing Draw records.
+   U_30_SRC_DAILY_PART11: Add SourcingYield records.
+   U_30_SRC_DAILY_PART12: Add Res records.
+   U_30_SRC_DAILY_PART13: Add SourcingRequirement Records.
+   U_30_SRC_DAILY_PART14: Add Cost Records.
+   U_30_SRC_DAILY_PART15: Now insert costtier records for 5 digit lanes.
+   U_30_SRC_DAILY_PART16: Now insert costtier records for 3 digit lanes or
+                           the 5 digit lanes defaulted???????????????????????????
+   U_30_SRC_DAILY_PART17: Now Populate teh ResCost table.
 */
 
 begin
@@ -54,7 +66,7 @@ from sourcing c, sku ss, sku sd,
             (select distinct g.item, g.loc dest, g.exclusive_loc source
             from udt_gidlimits_na g, loc l
             where g.exclusive_loc = l.loc
-            and l.loc_type = 4
+            and l.loc_type in (2,4,5)
             and g.exclusive_loc is not null
             and g.de = 'E'
             
@@ -63,7 +75,7 @@ from sourcing c, sku ss, sku sd,
             select distinct g.item, g.loc, g.mandatory_loc 
             from udt_gidlimits_na g, loc l
             where g.mandatory_loc = l.loc
-            and l.loc_type = 2
+            and l.loc_type in (2,4,5)
             and g.mandatory_loc is not null
             ) u
     
@@ -192,7 +204,8 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= v_demand_start_date
+                      and sku.eff between v_demand_start_date 
+                                      and next_day(v_demand_end_date,'SAT')
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
                     /* added by MAK */
@@ -227,6 +240,12 @@ from sourcing src,
                     and i.enablesw=1
                     and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
+                    and not exists
+                         (select '1'
+                            from udt_gidlimits_na gl
+                           where   gl.exclusive_loc = sku.loc
+                             and gl.item = sku.item
+                         )
                     union 
                     select sku.item
                           ,sku.loc
@@ -246,8 +265,14 @@ from sourcing src,
                       and trim(l1.u_3digitzip ) is not null
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
-                      and ps.res= 'SOURCEFLATBED'
-                    ) source_sku
+                      and ps.res= 'SOURCEFLATBED' 
+                      and not exists
+                         (select '1'
+                            from udt_gidlimits_na gl
+                           where   gl.exclusive_loc = sku.loc
+                             and gl.item = sku.item
+                         )
+                  ) source_sku
             where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
               and ( ( u_equipment_type='FB'and source_sku.flatbed_status=1) 
@@ -274,7 +299,7 @@ and not exists ( select '1'
                    from udt_gidlimits_na gl1 
                   where gl1.loc  = src.dest
                     and gl1.item = src.item 
-                    and gl1.forbidden_loc = src.source )  
+                    and gl1.forbidden_loc = src.source )
 and src.item is null;
 
 commit;
@@ -385,7 +410,8 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= v_demand_start_date
+                      and sku.eff between v_demand_start_date 
+                                      and next_day(v_demand_end_date,'SAT')
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
                     /* added by MAK - D not add extra unwanted lanes.*/
@@ -420,6 +446,12 @@ from sourcing src,
                     and i.enablesw=1
                     and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
+                    and not exists
+                       (select '1'
+                          from udt_gidlimits_na gl
+                         where   gl.exclusive_loc = sku.loc
+                           and gl.item = sku.item
+                       )
                     union 
                     select sku.item
                           ,sku.loc
@@ -440,6 +472,12 @@ from sourcing src,
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
                       and ps.res= 'SOURCEFLATBED'
+                      and not exists
+                         (select '1'
+                            from udt_gidlimits_na gl
+                           where   gl.exclusive_loc = sku.loc
+                             and gl.item = sku.item
+                         )
                     ) source_sku
             where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
@@ -597,7 +635,8 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= v_demand_start_date
+                      and sku.eff between v_demand_start_date 
+                                      and next_day(v_demand_end_date,'SAT')
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
                     /* added by MAK */
@@ -632,6 +671,12 @@ from sourcing src,
                     and i.enablesw=1
                     and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
+                    and not exists
+                       (select '1'
+                          from udt_gidlimits_na gl
+                         where   gl.exclusive_loc = sku.loc
+                           and gl.item = sku.item
+                       )
                     union 
                     select sku.item
                           ,sku.loc
@@ -652,6 +697,12 @@ from sourcing src,
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
                       and ps.res= 'SOURCEFLATBED'
+                      and not exists
+                         (select '1'
+                            from udt_gidlimits_na gl
+                           where   gl.exclusive_loc = sku.loc
+                             and gl.item = sku.item
+                         )
                     ) source_sku
             where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
@@ -804,7 +855,8 @@ from sourcing src,
                       and sku.item = i.item
                       and i.u_stock = 'C'
                       and sku.qty > 0
-                      and sku.eff <= v_demand_start_date
+                      and sku.eff between v_demand_start_date 
+                                      and next_day(v_demand_end_date,'SAT')
                       and trim(l.postalcode ) is not null
                       and trim(l.u_3digitzip ) is not null
                     /* added by MAK */
@@ -839,6 +891,12 @@ from sourcing src,
                     and i.enablesw=1
                     and ps.loc=sku.loc
                     and ps.res= 'SOURCEFLATBED'
+                    and not exists
+                       (select '1'
+                          from udt_gidlimits_na gl
+                         where   gl.exclusive_loc = sku.loc
+                           and gl.item = sku.item
+                       )
                     union 
                     select sku.item
                           ,sku.loc
@@ -859,6 +917,12 @@ from sourcing src,
                       and l1.U_AREA='NA'                       
                       and l1.loc=ps.loc
                       and ps.res= 'SOURCEFLATBED'
+                      and not exists
+                         (select '1'
+                            from udt_gidlimits_na gl
+                           where   gl.exclusive_loc = sku.loc
+                             and gl.item = sku.item
+                         )
                     ) source_sku
             where dest.loc <> source_sku.loc
               and dest.item = source_sku.item
@@ -1185,7 +1249,7 @@ source_skus ( source,  postal_code, item, stocktype)
  as
   ( select l.loc source, l.postalcode postalcode, i.item, ps.u_stock
   from scpomgr.loc l, scpomgr.udt_plant_status ps, item i, sku sku
-     where l.loc_type in ('2','4')
+     where l.loc_type in ('2','4','5')
        and l.u_area='NA'
        and l.loc=ps.loc
        and (ps.res like '%RUSOURCE' or ps.res like '%ARSOURCE')
@@ -1200,7 +1264,7 @@ dest_skus ( dest,  postal_code,  item, max_dist, max_src, stocktype)
  as  
   ( select l.loc, l.postalcode postalcode, i.item, l.u_max_dist, l.u_max_src, ps.u_stock
   from scpomgr.loc l, scpomgr.udt_plant_status ps, item i, sku sku
-     where l.loc_type in ('2','4')
+     where l.loc_type in ('2','4','5')
        and l.u_area='NA'
        and l.loc=ps.loc
        and (ps.res like '%RUDEST' or ps.res like '%ARDEST')

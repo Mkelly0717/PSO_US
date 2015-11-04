@@ -36,58 +36,30 @@ commit;
 
 --about five minutes; must run this before running u_60_pst_validation
 
---execute immediate 'truncate table tmp_resmetric';
---
---insert into tmp_resmetric  
---
---select *  
---from resmetric;
---
---commit;
---
---execute immediate 'truncate table tmp_skumetric';
---
---insert into tmp_skumetric 
---
---select *  
---from skumetric;
---
---commit;
---
---execute immediate 'truncate table tmp_productionmetric';
---
---insert into tmp_productionmetric 
---
---select *  
---from productionmetric;
---
---commit;
---
---execute immediate 'truncate table tmp_productionresmetric';
---
---insert into  tmp_productionresmetric  
---
---select *  
---from productionresmetric;
---
---commit;
---
---execute immediate 'truncate table tmp_sourcingmetric';
---
---insert into tmp_sourcingmetric  
---
---select *  
---from sourcingmetric;
---
---commit;
---
---execute immediate 'truncate table tmp_sourcingresmetric';
---
---insert into tmp_sourcingresmetric  
---
---select *  
---from sourcingresmetric;
---
---commit;
+execute immediate 'truncate table udt_resmetric_wk';
+
+insert into udt_resmetric_wk  
+select *  
+from resmetric;
+
+commit;
+
+execute immediate 'truncate table udt_productionresmetric_wk';
+
+insert into  udt_productionresmetric_wk  
+
+select *  
+from productionresmetric;
+
+commit;
+
+
+
+execute immediate 'truncate table udt_sourcingresmetric_wk';
+insert into udt_sourcingresmetric_wk  
+select *  
+from sourcingresmetric;
+
+commit;
 
 end;

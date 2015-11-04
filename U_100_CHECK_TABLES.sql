@@ -32,20 +32,20 @@ begin
   select count(1) into v_cal from  cal;
   select count(1) into v_caldata from  caldata;
   select count(1) into  v_cost from  cost;
-  SELECT COUNT(1) INTO  V_COSTTIER FROM  COSTTIER;
---  SELECT COUNT(1) INTO  V_PRODMETHOD FROM  PRODMETHOD;
---  select count(1) into  v_productionstep  from productionstep;
---  select count(1) into  v_prodyield from prodyield;
+  select count(1) into  v_costtier from  costtier;
+  select count(1) into v_prodmethod from productionmethod;
+  select count(1) into  v_productionstep  from productionstep;
+  select count(1) into  v_prodyield from productionyield;
   select count(1) into  v_res from res;
   SELECT COUNT(1) INTO  V_RESCONSTRAINT FROM  RESCONSTRAINT;
   select count(1) into  v_rescost from  rescost;
   select count(1) into  v_respenalty from  respenalty;
   select count(1) into  v_sku from  sku;
---  select count(1) into  v_skudemandparam from  skudemandparam;
---  select count(1) into  v_skudeployparam from  skudeployparam;
---  select count(1) into  v_skussparam from  skussparam;
---  select count(1) into  v_skuplannparam from  skuplannparam;
---  select count(1) into  v_skupenalty from skupenalty;
+  select count(1) into  v_skudemandparam from  skudemandparam;
+  select count(1) into  v_skudeployparam from  skudeploymentparam;
+  select count(1) into  v_skussparam from  skusafetystockparam;
+  select count(1) into  v_skuplannparam from  skuplanningparam;
+  select count(1) into  v_skupenalty from skupenalty;
   select count(1) into  v_sourcing from  sourcing;
   SELECT COUNT(1) INTO  V_SOURCINGMETRIC FROM  SOURCINGMETRIC;
   select count(1) into  v_storagereq from  storagerequirement;
@@ -56,20 +56,20 @@ begin
    ,CAL
    ,caldata
    ,cost
-   ,COSTTIER
---   ,prodmethod
---   ,productionstep
---   ,prodyield
+   ,costtier
+   ,prodmethod
+   ,productionstep
+   ,prodyield
    ,res
    ,resconstraint
    ,rescost
    ,respenalty
    ,sku
---   ,skudemandparam
---   ,skudeployparam
---   ,skupenalty
---   ,skuplannparam
---   ,skussparam
+   ,skudemandparam
+   ,skudeployparam
+   ,skupenalty
+   ,skuplannparam
+   ,skussparam
    ,sourcing
    ,sourcingmetric
    ,storagereq
@@ -80,19 +80,19 @@ begin
    ,v_caldata
    ,v_cost
    ,V_COSTTIER
---   ,V_PRODMETHOD
---   ,v_productionstep
---   ,V_PRODYIELD
+   ,V_PRODMETHOD
+   ,v_productionstep
+   ,V_PRODYIELD
    ,v_res
    ,v_resconstraint
    ,v_rescost
    ,v_respenalty
    ,v_sku
---   ,v_skudemandparam
---   ,v_skudeployparam
---   ,v_skupenalty
---   ,v_skuplannparam
---   ,v_skussparam
+   ,v_skudemandparam
+   ,v_skudeployparam
+   ,v_skupenalty
+   ,v_skuplannparam
+   ,v_skussparam
    ,v_sourcing
    ,v_sourcingmetric
    ,v_storagereq

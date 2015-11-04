@@ -147,7 +147,7 @@ from res r,
 
     (select distinct 'HTRCAP'
                            ||'@'
-                           ||lpad(i.u_materialcode, 2, '0')
+--                           ||lpad(i.u_materialcode, 2, '0')
                            ||s.loc res
                       , s.loc, 4 type, 28 qtyuom
     from sku s, loc l, item i,
@@ -169,7 +169,7 @@ from res r,
     
     select distinct 'HTRCST'
                           ||'@'
-                          ||lpad(i.u_materialcode, 2, '0')
+--                          ||lpad(i.u_materialcode, 2, '0')
                           ||s.loc res
                      , s.loc, 4 type, 18 qtyuom
     from sku s, loc l, item i,
@@ -197,6 +197,13 @@ AND EXISTS ( SELECT 1
                 AND PS.RES='HEATTREAT'
                 AND PS.STATUS=1
             )
+  and exists
+(select 1
+from udt_yield y
+where y.loc=u.loc
+    and y.yield > 0
+    and y.maxcap>0
+)
 and r.res is null;
 
 commit;
@@ -289,11 +296,11 @@ from productionmethod pm, productionstep ps, res r, item i,
 where pm.item = i.item
 and (r.res = 'HTRCST'
                    ||'@'
-                   ||lpad(i.u_materialcode, 2, '0')
+--                   ||lpad(i.u_materialcode, 2, '0')
                    ||pm.loc  
                 or r.res = 'HTRCAP'
                    ||'@'
-                   ||lpad(i.u_materialcode, 2, '0')
+--                   ||lpad(i.u_materialcode, 2, '0')
                    ||pm.loc
      )
 and r.loc = pm.loc

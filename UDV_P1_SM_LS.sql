@@ -50,23 +50,21 @@ select sm.sourcing
   , sm.qty
   , sm.rank
   , ls.priority p1
-   , ctier.cost
+  , ctier.cost
   , ctier.value
 from src_metric sm
   , udt_llamasoft_data ls
-  , COSTTIER CTIER
-WHERE   SM.SRC  =LS.SOURCE(+)
-    AND SM.DEST =LS.DEST(+)
-    AND SM.ITEM =LS.ITEM(+)
-    AND SM.ET   =LS.U_EQUIPMENT_TYPE(+)
+  , costtier ctier
+where sm.src =ls.source(+)
+    and sm.dest =ls.dest(+)
+    and sm.item =ls.item(+)
+    and sm.et =ls.u_equipment_type(+)
     and ctier.cost = sm.sourcing
     || '_'
     || sm.src
     || '->'
-    || SM.DEST
+    || sm.dest
     || '-202'
---    AND SM.SRC='UT50'
---    and sm.dest='3000146840'
-ORDER BY SM.ITEM
-  , SM.DEST
-  , sm.RANK
+order by sm.item
+  , sm.dest
+  , sm.rank

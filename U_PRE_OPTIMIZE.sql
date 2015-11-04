@@ -7,7 +7,6 @@ set define off;
 
 BEGIN
 
-
 u_8d;
 
 
@@ -39,6 +38,8 @@ u_29_prd_resconstraint_wk;
 
 
 U_30_SRC_DAILY;
+
+U_11_SKU_STORAGE;
 
 
 U_100_ERROR_STATS;

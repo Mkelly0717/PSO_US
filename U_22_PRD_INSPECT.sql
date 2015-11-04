@@ -217,13 +217,13 @@ where ps.loc=l.loc
     and ps.res='SORT'
     and ps.status=1
 )
-  and exists
-(select 1
-from udt_yield y
-where y.loc=l.loc
-    and y.yield > 0
-    and y.maxcap>0
-)
+--  and exists
+--(select 1
+--from udt_yield y
+--where y.loc=l.loc
+--    and y.yield > 0
+--    and y.maxcap>0
+--)
 and l.u_area = 'NA'
 and u.loc = r.loc(+)
 and u.res = r.res(+)
