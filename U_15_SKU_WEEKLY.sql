@@ -46,7 +46,7 @@ insert into igpmgr.intins_skuconstraint
         from dfutoskufcst f, item i
         where f.dmdgroup in ('TPM') 
         and f.item = i.item
-        and i.u_stock in ('A', 'B', 'C')
+        and i.u_stock = 'A'
         group by f.item, f.skuloc, f.startdate
         )
         

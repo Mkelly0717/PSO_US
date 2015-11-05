@@ -25,7 +25,6 @@ set define off;
    18: Create SkuSafteyStock records.
    19: Update Sku:OHPOST
 */
-
 begin
 /******************************************************************
 ** Part 1: Create Items                                           * 
@@ -434,9 +433,7 @@ select distinct 'U_10_SKU_BASE_PART11'
     ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i,  
 
-    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc
-                   , f.loc skuloc, startdate, dur, 1 type, 0 supersedesw
-                   , ''  ff_trigger_control, sum(qty) totfcst
+    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc, f.loc skuloc, startdate, dur, 1 type, 0 supersedesw, ''  ff_trigger_control, sum(qty) totfcst
     from fcst f, dfuview v, loc l
     where f.startdate between v_demand_start_date and next_day(v_demand_end_date,'SAT')
     and f.dmdgroup in ('ISS')
@@ -473,30 +470,38 @@ select distinct 'U_10_SKU_BASE_PART12'
     ,f.dur, f.type, f.supersedesw, f.ff_trigger_control, f.totfcst
 from sku s, item i, loc l, 
 
-    (select distinct f.dmdunit, f.dmdunit item, f.dmdgroup, f.loc dfuloc
+    (select distinct f.dmdunit
+       , f.loc
+       , case f.dmdunit
+           when 'PALLET' then '4001AI'
+           else '4001AI'
+         end item, f.dmdgroup, f.loc dfuloc
               ,f.loc skuloc , startdate, dur, 1 type, 0 supersedesw
               ,''  ff_trigger_control, sum(qty) totfcst
-    from fcst f, dfuview v
+    from fcst@scpomgr_chpprddb f, dfuview v, loc l
     where f.startdate between v_demand_start_date and next_day(v_demand_end_date,'SAT')
     and f.dmdgroup in ('TPM')
     and f.dmdunit = v.dmdunit
     and f.dmdgroup = v.dmdgroup
     and f.loc = v.loc
-    and v.u_dfulevel = 0
-    and f.dmdunit <> '4055RUNEW'
+    and v.u_dfulevel = 1
+    and l.loc=f.loc
+    and l.loc_type in (2,4)
+    and l.u_area='NA'
+    and l.enablesw=1
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
+    order by dmdunit, skuloc, startdate
     ) f
         
 where f.item = s.item
 and f.skuloc = s.loc
 and f.item = i.item
-and i.u_stock in ('A', 'B', 'C')
+and i.u_stock = 'A'
 and i.enablesw=1
 and f.skuloc = l.loc
 and l.loc_type in (2, 4)
 and l.u_area = 'NA'
 and l.enablesw=1;
-
 commit;
 
 /******************************************************************

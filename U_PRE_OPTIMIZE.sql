@@ -16,9 +16,6 @@ U_10_SKU_BASE;
 U_11_SKU_STORAGE;
 
 
-u_12_sku_tpm_fcst_adj;
-
-
 u_15_sku_weekly;
 
 
@@ -41,6 +38,7 @@ U_30_SRC_DAILY;
 
 U_11_SKU_STORAGE;
 
+u_35_tpm_corrections;
 
 U_100_ERROR_STATS;
 end;

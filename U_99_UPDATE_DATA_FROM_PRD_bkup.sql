@@ -1,9 +1,5 @@
---------------------------------------------------------
---  DDL for Procedure U_99_UPDATE_DATA_FROM_PRD
---------------------------------------------------------
-set define off;
-
-  CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_99_UPDATE_DATA_FROM_PRD" as
+create or replace
+procedure         u_99_update_data_from_prd as
 
 begin
 

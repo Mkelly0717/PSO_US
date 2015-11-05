@@ -1158,18 +1158,11 @@ from (select i.item item
       ,l1.u_max_dist max_dist
       ,l1.u_max_src  max_src
 from udt_fixed_coll coll, item i, loc l1, loc l2
-where (  ( i.u_stock = 'A'
-           and coll.loc=l1.loc
-           and l1.loc_type in ('2','3','4')
-          )
-       or
-         ( i.u_stock = 'B'
-           and coll.loc=l1.loc
-           and l1.loc_type in ('2','4')
-         )
-      )
+where i.u_stock = 'A'
+  and coll.loc=l1.loc
+  and l1.loc_type = '3'
   and coll.plant = l2.loc
-  and l2.loc_type='2'
+  and l2.loc_type in ('2','4')
   and exists ( select '1'
                 from skuconstraint skc 
                where skc.loc=l1.loc 
