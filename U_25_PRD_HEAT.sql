@@ -158,7 +158,7 @@ from res r,
         ) q
     
     where s.loc = l.loc
-    and l.loc_type = 2
+    and l.loc_type in (2,5)
     and l.enablesw = 1
     and s.enablesw = 1
     and s.item = i.item
@@ -180,7 +180,7 @@ from res r,
         ) q
     
     where s.loc = l.loc
-    and l.loc_type = 2
+    and l.loc_type in (2, 5)
     and l.enablesw = 1
     and s.enablesw = 1
     and s.item = i.item
@@ -240,7 +240,7 @@ from sku s, bom b, loc l, item i,
       where productionmethod = 'HTR'
     ) t
 where s.loc = l.loc
-and l.loc_type = 2
+and l.loc_type in  (2, 5)
 and s.enablesw = 1 
 and b.subord = i.item
 and i.u_stock = 'C'

@@ -174,6 +174,9 @@ where i.item in ( '4055RUNEW'
                  ,'4055RUPREMIUM' 
                 )
     and l.loc_type = '1'
+    and l.u_area='NA'
+    and l.enablesw=1
+    and i.enablesw=1
     and not exists
     ( select 1 from sku sku where sku.loc=l.loc and sku.item=i.item
     ); 
@@ -202,7 +205,7 @@ select distinct 'U_10_SKU_BASE_PART6'
    ,1 minohcovrule, 1 targetohcovrule, ' ' ltdgroup, 0 infinitesupplysw
    , 0 mpbatchnum, 0 seqintenablesw, -1 itemstoregrade, 0 rpbatchnum
 from loc l, item i, udt_yield yield
-where l.loc_type in (2, 4)
+where l.loc_type in (2, 4, 5)
   and l.u_area='NA'
   and i.u_stock='C'
   and i.enablesw = 1
@@ -314,7 +317,7 @@ from
         where f.startdate 
                 between v_demand_start_date and next_day(v_demand_end_date,'SAT')
         and l.u_area = 'NA'
-        and l.loc_type in (2,4,5)
+        and l.loc_type in (4)
         and l.enablesw = 1 
         and i.u_stock in ('A', 'B', 'C')
         and i.enablesw = 1
@@ -325,7 +328,7 @@ from
         and f.dmdgroup like ('%TPM%')
         and f.dmdgroup = v.dmdgroup
         and f.loc = v.loc
-        and v.u_dfulevel = 0
+        and v.u_dfulevel = 1
         ) f
         
     where f.item = s.item(+)
@@ -357,21 +360,13 @@ where ps.status=1
   and l.u_area='NA'
   and l.loc_type in (2,4,5)
   and l.enablesw=1
-  and i.u_stock in ('B','C')
+  and i.u_stock = 'C'
   and i.enablesw=1
-  and ( ( ps.u_stock = 'C' and i.u_stock='C'
-           and (  ps.res like ('%RUSOURCE') 
-               or ps.res like ('%RUDEST') 
-                )
-        )
-        or 
-        (
-           ps.u_stock = 'B' and i.u_stock='B'
-              and (   ps.res like ('%ARSOURCE') 
-                   or ps.res like ('%ARDEST') 
-                   )
-         ) 
-       )
+  and ps.u_stock = 'C' 
+  and i.u_stock='C'
+  and (  ps.res like ('%RUSOURCE') 
+         or ps.res like ('%RUDEST') 
+      )
  and not exists ( select 1
                     from sku sku
                    where sku.loc=l.loc
@@ -478,7 +473,7 @@ from sku s, item i, loc l,
          end item, f.dmdgroup, f.loc dfuloc
               ,f.loc skuloc , startdate, dur, 1 type, 0 supersedesw
               ,''  ff_trigger_control, sum(qty) totfcst
-    from fcst@scpomgr_chpprddb f, dfuview v, loc l
+    from fcst f, dfuview v, loc l
     where f.startdate between v_demand_start_date and next_day(v_demand_end_date,'SAT')
     and f.dmdgroup in ('TPM')
     and f.dmdunit = v.dmdunit
@@ -486,7 +481,7 @@ from sku s, item i, loc l,
     and f.loc = v.loc
     and v.u_dfulevel = 1
     and l.loc=f.loc
-    and l.loc_type in (2,4)
+    and l.loc_type = 4
     and l.u_area='NA'
     and l.enablesw=1
     group by f.dmdunit, f.dmdgroup, f.loc,  f.startdate, dur, 1, 0
@@ -499,7 +494,7 @@ and f.item = i.item
 and i.u_stock = 'A'
 and i.enablesw=1
 and f.skuloc = l.loc
-and l.loc_type in (2, 4)
+and l.loc_type = 4
 and l.u_area = 'NA'
 and l.enablesw=1;
 commit;

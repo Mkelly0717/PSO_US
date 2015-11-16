@@ -434,7 +434,7 @@ from sourcing src,
                         ,sku sku
                         ,udt_plant_status ps                              
                     where l.loc=sku.loc
-                    and l.loc_type = 2
+                    and l.loc_type in (2, 4, 5)
                     and l.U_AREA='NA'
                     and l.postalcode  is not null
                     and l.u_3digitzip is not null
@@ -462,7 +462,7 @@ from sourcing src,
                         ,loc l1
                         ,item i1
                         ,udt_plant_status ps       
-                    where l1.loc_type = 2
+                    where l1.loc_type in ( 2,4,5)
                       and i1.u_stock='C'
                       and sku.item=i1.item
                       and sku.oh > 0
@@ -1162,7 +1162,7 @@ where i.u_stock = 'A'
   and coll.loc=l1.loc
   and l1.loc_type = '3'
   and coll.plant = l2.loc
-  and l2.loc_type in ('2','4')
+  and l2.loc_type in ('2','4', '5')
   and exists ( select '1'
                 from skuconstraint skc 
                where skc.loc=l1.loc 

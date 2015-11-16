@@ -25,7 +25,11 @@ select distinct 'U_11_SKU_STORAGE_PART1'
        ,15 currencyuom, 0 productionfamilychgoveropt
 from res r, 
 
-    (select loc, 'STORAGE@'||loc res from loc where loc_type in (1, 2)
+    (select l.loc, 'STORAGE@'||l.loc res 
+       from loc l
+       where l.loc_type in (1, 2, 4, 5)
+         and l.u_area='NA'
+         and l.enablesw =1
     union
     select distinct skuloc loc, 'STORAGE@'||skuloc res from dfutoskufcst where totfcst > 0 
     union

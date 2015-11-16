@@ -103,7 +103,7 @@ from bom b, sku s, sku ss, loc l,
     ) u
 
 where u.loc = l.loc 
-and l.loc_type in (2, 4)
+and l.loc_type in (2, 4, 5)
 and u.item = s.item
 and u.loc = s.loc
 and u.subord = ss.item
@@ -153,7 +153,7 @@ from sku s, bom b, loc l, item i,
     ) p
     
 where s.loc = l.loc
-and l.loc_type in ( 2, 4)
+and l.loc_type in ( 2, 4, 5)
 and s.enablesw = 1 
 and b.subord = i.item
 and i.u_stock = 'A'
@@ -187,7 +187,7 @@ from res r, loc l,
     (select distinct 'INSCAP'||'@'||s.loc res, s.loc, 4 type, 28 qtyuom
     from sku s, loc l, item i
     where s.loc = l.loc
-    and l.loc_type in ( 2, 4)
+    and l.loc_type in ( 2, 4, 5)
     and l.u_area='NA'
     and l.enablesw = 1
     and s.enablesw = 1
@@ -202,7 +202,7 @@ from res r, loc l,
                   ,s.loc, 4 type, 18 qtyuom
     FROM SKU S, LOC L, ITEM I
     where s.loc = l.loc 
-    and l.loc_type in ( 2, 4)
+    and l.loc_type in ( 2, 4, 5)
     and l.enablesw = 1
     and s.enablesw = 1
     and s.item = i.item
@@ -265,7 +265,7 @@ from productionmethod pm, productionstep ps, res r, loc l, item i,
         ) u
 
 where pm.loc = l.loc
-and l.loc_type in (2, 4)
+and l.loc_type in (2, 4, 5)
 and (r.res = 'INSCST'
              ||'@'
              ||pm.loc  or r.res = 'INSCAP'
@@ -347,7 +347,7 @@ AND EXISTS ( SELECT 1
                 AND PS.RES='SORT'
                 AND PS.STATUS=1
             )
-and l.loc_type in ( 2, 4)
+and l.loc_type in ( 2, 4, 5)
 and so.item = p.outputitem
 and so.loc = p.loc
 and p.item = y.item(+)

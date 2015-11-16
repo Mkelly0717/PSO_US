@@ -146,7 +146,7 @@ from res r,
         ) q
     
     where s.loc = l.loc
-    and l.loc_type in ( 2, 4)
+    and l.loc_type in ( 2, 4, 5)
     and l.enablesw = 1
     and s.enablesw = 1
     and s.item = i.item
@@ -169,7 +169,7 @@ from res r,
         ) q
     
     where s.loc = l.loc
-    and l.loc_type in ( 2, 4)
+    and l.loc_type in ( 2, 4, 5)
     and l.enablesw = 1
     and s.enablesw = 1
     and s.item = i.item
@@ -227,7 +227,7 @@ from sku s, bom b, loc l, item i, udt_plant_status ps,
       where productionmethod = 'REP' and maxcap > 0 and yield > 0
     ) t
 where s.loc = l.loc
-and l.loc_type in ( 2, 4)
+and l.loc_type in ( 2, 4, 5)
 and ps.loc=l.loc
 and ps.res='REPAIR'
 and ps.status=1

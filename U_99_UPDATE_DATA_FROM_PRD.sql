@@ -6,56 +6,56 @@ set define off;
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_99_UPDATE_DATA_FROM_PRD" as
 
 begin
-
-declare
-  cursor cur_selected is
-        select p.loc, p.loc_type, p.u_loctype, p.country, p.u_area, p.u_geocode, p.u_custtype, p.postalcode, p.lon, p.lat,  p.u_max_dist, p.u_max_src  
-        from scpomgr.loc@scpomgr_chpprddb.jdadelivers.com p, loc l
-        where l.loc = p.loc
-        and p.u_area = 'NA'
-    for update of l.lon;
-begin
-  for cur_record in cur_selected loop
-  
-    update loc 
-    set loc_type = cur_record.loc_type
-    where current of cur_selected;
-    
-    update loc 
-    set u_loctype = cur_record.u_loctype
-    where current of cur_selected;
-    
-    update loc 
-    set u_area = cur_record.u_area
-    where current of cur_selected;
-    
-    update loc 
-    set postalcode = cur_record.postalcode
-    where current of cur_selected;
-    
-    update loc 
-    set u_geocode = cur_record.u_geocode
-    where current of cur_selected;
-    
-    update loc 
-    set u_custtype = cur_record.u_custtype  
-    where current of cur_selected;
-    
-    update loc 
-    set country = cur_record.country
-    where current of cur_selected;
-    
-    update loc 
-    set u_max_dist = cur_record.u_max_dist
-    where current of cur_selected;
-    
-    update loc 
-    set u_max_src = cur_record.u_max_src
-    where current of cur_selected;
-    
-  end loop;
-  commit;
-end;
+--
+--declare
+--  cursor cur_selected is
+--        select p.loc, p.loc_type, p.u_loctype, p.country, p.u_area, p.u_geocode, p.u_custtype, p.postalcode, p.lon, p.lat,  p.u_max_dist, p.u_max_src  
+--        from scpomgr.loc@scpomgr_chpprddb.jdadelivers.com p, loc l
+--        where l.loc = p.loc
+--        and p.u_area = 'NA'
+--    for update of l.lon;
+--begin
+--  for cur_record in cur_selected loop
+--  
+--    update loc 
+--    set loc_type = cur_record.loc_type
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set u_loctype = cur_record.u_loctype
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set u_area = cur_record.u_area
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set postalcode = cur_record.postalcode
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set u_geocode = cur_record.u_geocode
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set u_custtype = cur_record.u_custtype  
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set country = cur_record.country
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set u_max_dist = cur_record.u_max_dist
+--    where current of cur_selected;
+--    
+--    update loc 
+--    set u_max_src = cur_record.u_max_src
+--    where current of cur_selected;
+--    
+--  end loop;
+--  commit;
+--end;
 
 insert into loc (loc, descr, ohpost, frzstart, sourcecal, destcal, type, altplantid, cust, transzone, lat, lon, enablesw, 
 ff_trigger_control, loc_type, vendid, companyid, workingcal, seqintexportdur, seqintimportdur, seqintlastexportedtoseq, 
@@ -139,7 +139,7 @@ where v.u_dfulevel in (0,1)
 and f.loc = l.loc
 and l.u_area = 'NA'
 --and f.startdate between v_demand_start_date and v_demand_end_date
-and f.startdate between to_date('10/11/2015', 'MM/DD/YYYY') and to_date('04/03/2016', 'MM/DD/YYYY')     
+and f.startdate between to_date('11/08/2015', 'MM/DD/YYYY') and to_date('05/01/2016', 'MM/DD/YYYY')     
 and f.dmdunit = v.dmdunit
 and f.dmdgroup = v.dmdgroup
 and f.loc = v.loc;

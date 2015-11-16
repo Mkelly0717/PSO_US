@@ -169,26 +169,28 @@ begin
           , qtyuom
           , timeuom
         )
-    select 'U_15_SKU_WEEKLY_PART5'
-      ,v_init_eff_date eff
+    select distinct 'U_15_SKU_WEEKLY_PART5'
+      ,rc.eff eff
       , 1200 rate
       , 112 category
-      , res
+      , rc.res
       , 15 currencyuom
       , 18 qtyuom
       , 0 timeuom
-    from res
-    where substr(res, 1, 10) = 'COLL0FIXED'
+    from resconstraint rc
+    where substr(rc.res, 1, 10) = 'COLL0FIXED'
+      and category=12
     union
-    select 'U_15_SKU_WEEKLY_PART5'
-      ,v_init_eff_date eff
+     select distinct 'U_15_SKU_WEEKLY_PART5'
+      ,rc.eff eff
       , 1200 rate
       , 111 category
-      , res
+      , rc.res
       , 15 currencyuom
       , 18 qtyuom
       , 0 timeuom
-    from res
-    where substr(res, 1, 10) = 'COLL0FIXED' ;
+    from resconstraint rc
+    where substr(rc.res, 1, 10) = 'COLL0FIXED'
+      and category=11;
     commit;
 end;
