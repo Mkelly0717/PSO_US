@@ -66,7 +66,7 @@ from sourcing c, sku ss, sku sd,
             (select distinct g.item, g.loc dest, g.exclusive_loc source
             from udt_gidlimits_na g, loc l
             where g.exclusive_loc = l.loc
-            and l.loc_type in (2,4,5)
+            and l.loc_type in (1,2,4,5)
             and g.exclusive_loc is not null
             and g.de = 'E'
             
@@ -75,7 +75,7 @@ from sourcing c, sku ss, sku sd,
             select distinct g.item, g.loc, g.mandatory_loc 
             from udt_gidlimits_na g, loc l
             where g.mandatory_loc = l.loc
-            and l.loc_type in (2,4,5)
+            and l.loc_type in (1,2,4,5)
             and g.mandatory_loc is not null
             ) u
     
@@ -1008,6 +1008,10 @@ from sourcing c,
                     and l.u_area = 'NA'
                     and l.u_runew_cust = 1
                     and l.loc_type = 3
+                    and not exists ( select '1' from udt_gidlimits_na gl 
+                                      where gl.loc  = s.loc 
+                                        and gl.item = s.item 
+                                        and gl.mandatory_loc is not null )  
                     ) f,
 
                     (select s.item, s.loc, l.postalcode source_pc
@@ -1017,6 +1021,11 @@ from sourcing c,
                     and l.loc_type = 1
                     and s.item = i.item
                     and i.u_stock = 'C'
+                    and not exists (select '1'
+                                      from udt_gidlimits_na gl
+                                     where gl.exclusive_loc = s.loc
+                                       and gl.item = s.item
+                         )
                     ) p
                     
             where f.item = p.item 
@@ -1034,6 +1043,11 @@ from sourcing c,
 where u.rank = 1
 and u.item = c.item(+)
 and u.dest = c.dest(+)
+and not exists ( select '1' 
+                   from udt_gidlimits_na gl1 
+                  where gl1.loc  = u.dest
+                    and gl1.item = u.item 
+                    and gl1.forbidden_loc = u.source )
 and c.item is null;
 
 commit;
@@ -1090,6 +1104,10 @@ from
                         and k.item <> '4055RUNEW'
                         and k.item = i.item
                         and i.u_stock = 'C'
+                        and not exists ( select '1' from udt_gidlimits_na gl 
+                                          where gl.loc  = k.loc 
+                                            and gl.item = k.item 
+                                            and gl.mandatory_loc is not null )  
                         ) k
 
                     where k.item = c.item(+)
@@ -1104,6 +1122,11 @@ from
                     and l.loc_type = 1
                     and s.item = i.item
                     and i.u_stock = 'C'
+                    and not exists (select '1'
+                                      from udt_gidlimits_na gl
+                                     where gl.exclusive_loc = s.loc
+                                       and gl.item = s.item
+                         )
                     ) p
                     
             where f.item = p.item 
@@ -1118,7 +1141,12 @@ from
    
     ) u
     
-where u.rank = 1;
+where u.rank = 1
+and not exists ( select '1' 
+                   from udt_gidlimits_na gl1 
+                  where gl1.loc  = u.dest
+                    and gl1.item = u.item 
+                    and gl1.forbidden_loc = u.source );
 
 commit;
 /*******************************************************************************
@@ -1241,7 +1269,7 @@ with
 source_skus ( source,  postal_code, item, stocktype)
  as
   ( select l.loc source, l.postalcode postalcode, i.item, ps.u_stock
-  from scpomgr.loc l, scpomgr.udt_plant_status ps, item i, sku sku
+  from scpomgr.loc l, scpomgr.udt_plant_status ps, item i, sku sku, skuconstraint skc
      where l.loc_type in ('2','4','5')
        and l.u_area='NA'
        and l.loc=ps.loc
@@ -1252,6 +1280,9 @@ source_skus ( source,  postal_code, item, stocktype)
        and ps.u_stock=i.u_stock
        and sku.item=i.item
        and sku.loc=l.loc
+       and skc.loc=sku.loc
+       and skc.item=sku.item
+       and skc.qty > 0
    ),
 dest_skus ( dest,  postal_code,  item, max_dist, max_src, stocktype)
  as  

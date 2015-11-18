@@ -5,64 +5,81 @@ set define off;
 
   CREATE OR REPLACE PROCEDURE "SCPOMGR"."U_8S_METRICS" as
 
+v_count number;
 Begin
 
 --less than 1 minute
 
---step 1
-
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONMETRIC');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_PRODUCTIONMETRIC_WK');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONRESMETRIC');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGMETRIC');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SOURCINGMETRIC_WK');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGRESMETRIC');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SKUMETRIC');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SKUMETRIC_WK');
-    DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESMETRIC');
-    
---do we do this???
-
+select count(*) into v_count from productionmetric;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONMETRIC');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'PRODUCTIONMETRIC');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONMETRIC');
+end if;
+
+select count(*) into v_count from udt_productionmetric_WK;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_PRODUCTIONMETRIC_WK');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'UDT_PRODUCTIONMETRIC_WK');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_PRODUCTIONMETRIC_WK',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_PRODUCTIONMETRIC_WK');
+end if;
+
+select count(*) into v_count from productionresmetric;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONRESMETRIC');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'PRODUCTIONRESMETRIC');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONRESMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONRESMETRIC');
+end if;
+
+select count(*) into v_count from sourcingmetric;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGMETRIC');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'SOURCINGMETRIC');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGMETRIC');
+end if;
+
+select count(*) into v_count from udt_sourcingmetric_WK;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SOURCINGMETRIC_WK');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'UDT_SOURCINGMETRIC_WK');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SOURCINGMETRIC_WK',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SOURCINGMETRIC_WK');
+end if;
+
+select count(*) into v_count from sourcingresmetric;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGRESMETRIC');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'SOURCINGRESMETRIC');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGRESMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGRESMETRIC');
+end if;
+
+select count(*) into v_count from skumetric;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SKUMETRIC');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'SKUMETRIC');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'SKUMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SKUMETRIC');
+end if;
+
+select count(*) into v_count from udt_skumetric_WK;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SKUMETRIC_WK');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'UDT_SKUMETRIC_WK');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SKUMETRIC_WK',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SKUMETRIC_WK');
+end if;
+
+select count(*) into v_count from resmetric;
+if v_count <>  0 then
+  DBMS_STATS.UNLOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESMETRIC');
   DBMS_STATS.DELETE_TABLE_STATS (OwnName => 'scpomgr',TabName => 'RESMETRIC');
-
---step 2
--- Gather table stats with cascade true,incase you are manually gathering stats while the process was running
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_PRODUCTIONMETRIC_WK',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONRESMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SOURCINGMETRIC_WK',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGRESMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'SKUMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SKUMETRIC_WK',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-    DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
-
--- Step 3
---Delete some of the  column stats for Process tables
---    DBMS_STATS.DELETE_COLUMN_STATS(ownname=> 'scpomgr', tabname => 'PRODUCTIONMETRIC', COLNAME => 'SERVICEID', statown => 'scpomgr');
---    DBMS_STATS.DELETE_COLUMN_STATS(ownname=> 'scpomgr', tabname => 'PRODUCTIONRESMETRIC', COLNAME => 'INSTANCEID', statown => 'scpomgr');
---    DBMS_STATS.DELETE_COLUMN_STATS(ownname=> 'scpomgr', tabname => 'SOURCINGMETRIC', COLNAME => 'SERVICEID', statown => 'scpomgr');
---    DBMS_STATS.DELETE_COLUMN_STATS(ownname=> 'scpomgr', tabname => 'SOURCINGRESMETRIC', COLNAME => 'INSTANCEID', statown => 'scpomgr');
---    DBMS_STATS.DELETE_COLUMN_STATS(ownname=> 'scpomgr', tabname => 'SKUMETRIC', COLNAME => 'SERVICEID', statown => 'scpomgr');
---    DBMS_STATS.DELETE_COLUMN_STATS(ownname=> 'scpomgr', tabname => 'RESMETRIC', COLNAME => 'INSTANCEID', statown => 'scpomgr');
-
---step 4
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONMETRIC');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_PRODUCTIONMETRIC_WK');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'PRODUCTIONRESMETRIC');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGMETRIC');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SOURCINGMETRIC_WK');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SOURCINGRESMETRIC');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'SKUMETRIC');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'UDT_SKUMETRIC_WK');
-    DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESMETRIC');
+  DBMS_STATS.GATHER_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESMETRIC',estimate_percent => dbms_stats.auto_sample_size , method_opt =>'for all indexed columns size auto', degree => 4, cascade => true);
+  DBMS_STATS.LOCK_TABLE_STATS(ownname => 'scpomgr', tabname => 'RESMETRIC');
+end if;
 
 End;

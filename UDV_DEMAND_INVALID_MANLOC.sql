@@ -26,7 +26,7 @@ where dmd.loc=gl.loc
     ( select 1 from sourcing src where src.dest=dmd.loc and src.item=dmd.item
     )
     or not exists
-    (select 1 from loc l where l.loc=gl.mandatory_loc and l.loc_type in (2,4,5)
+    (select 1 from loc l where l.loc=gl.mandatory_loc and l.loc_type in (1,2,4,5)
     ) )
 order by dmd.loc asc
   , dmd.item asc

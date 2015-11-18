@@ -1,0 +1,17 @@
+--------------------------------------------------------
+--  DDL for Table KEY_UDT_SOURCINGMETRIC_WK
+--------------------------------------------------------
+
+  CREATE TABLE "SCPOMGR"."KEY_UDT_SOURCINGMETRIC_WK" 
+   (	"KEY_ID" FLOAT(126) DEFAULT 0, 
+	"KEY_TYPE" CHAR(1 CHAR), 
+	"CATEGORY" NUMBER, 
+	"SOURCE" VARCHAR2(200 CHAR), 
+	"SOURCING" VARCHAR2(200 CHAR), 
+	"DEST" VARCHAR2(200 CHAR), 
+	"ITEM" VARCHAR2(200 CHAR), 
+	"EFF" DATE, 
+	"SESSION_ID" VARCHAR2(75 CHAR), 
+	"CREATE_DATE" DATE, 
+	"VIEW_ID" VARCHAR2(513 CHAR)
+   )

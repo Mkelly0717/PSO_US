@@ -17,7 +17,7 @@
       ,ld.u_equipment_type
       ,round(sum(value),0) qty
       ,dense_rank() over ( partition by item, dest order by sum(value)desc ) as rank
-    from sourcingmetric sm
+    from udt_sourcingmetric_wk sm
       , loc ls
       , loc ld
     where sm.category=418
