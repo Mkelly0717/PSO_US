@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index RESOSUPPLYDETAIL_IDX1
---------------------------------------------------------
-
-  CREATE INDEX "SCPOMGR"."RESOSUPPLYDETAIL_IDX1" ON "SCPOMGR"."RESOSUPPLYDETAIL" ("SUPPLYORDERTYPE", "PROCESSID", "SUPPLYORDERSEQNUM") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

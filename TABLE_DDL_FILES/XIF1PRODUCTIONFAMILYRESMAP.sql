@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index XIF1PRODUCTIONFAMILYRESMAP
---------------------------------------------------------
-
-  CREATE INDEX "SCPOMGR"."XIF1PRODUCTIONFAMILYRESMAP" ON "SCPOMGR"."PRODUCTIONFAMILYRESMAP" ("PRODFAMILY") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

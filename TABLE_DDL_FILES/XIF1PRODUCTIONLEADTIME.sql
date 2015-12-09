@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index XIF1PRODUCTIONLEADTIME
---------------------------------------------------------
-
-  CREATE INDEX "SCPOMGR"."XIF1PRODUCTIONLEADTIME" ON "SCPOMGR"."PRODUCTIONLEADTIME" ("PRODUCTIONMETHOD", "ITEM", "LOC") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

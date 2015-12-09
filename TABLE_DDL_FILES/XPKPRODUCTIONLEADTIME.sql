@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index XPKPRODUCTIONLEADTIME
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "SCPOMGR"."XPKPRODUCTIONLEADTIME" ON "SCPOMGR"."PRODUCTIONLEADTIME" ("PRODUCTIONMETHOD", "EFF", "ITEM", "LOC") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

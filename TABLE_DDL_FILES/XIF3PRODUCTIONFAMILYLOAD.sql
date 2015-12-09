@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index XIF3PRODUCTIONFAMILYLOAD
---------------------------------------------------------
-
-  CREATE INDEX "SCPOMGR"."XIF3PRODUCTIONFAMILYLOAD" ON "SCPOMGR"."PRODUCTIONFAMILYLOAD" ("CHGOVERPRODFAMILY") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

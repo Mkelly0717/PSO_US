@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index PRODITEMPROJ_PK
---------------------------------------------------------
-
-  CREATE UNIQUE INDEX "SCPOMGR"."PRODITEMPROJ_PK" ON "SCPOMGR"."PRODITEMPROJ" ("PRODUCTIONMETHOD", "ITEM", "PRODUCTIONMETHODITEM", "LOC", "TVQCATEGORY", "EFF") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

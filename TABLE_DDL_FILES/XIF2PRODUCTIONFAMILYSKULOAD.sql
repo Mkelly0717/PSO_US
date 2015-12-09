@@ -1,7 +1,0 @@
---------------------------------------------------------
---  DDL for Index XIF2PRODUCTIONFAMILYSKULOAD
---------------------------------------------------------
-
-  CREATE INDEX "SCPOMGR"."XIF2PRODUCTIONFAMILYSKULOAD" ON "SCPOMGR"."PRODUCTIONFAMILYSKULOAD" ("RES") 
-  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS 
-  TABLESPACE "SCPODATA"

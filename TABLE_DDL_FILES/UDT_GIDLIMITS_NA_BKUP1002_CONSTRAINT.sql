@@ -1,7 +1,0 @@
---------------------------------------------------------
---  Constraints for Table UDT_GIDLIMITS_NA_BKUP1002
---------------------------------------------------------
-
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS_NA_BKUP1002" MODIFY ("U_LOC_TYPE" NOT NULL ENABLE)
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS_NA_BKUP1002" MODIFY ("PRIMARY_KEY_COL" NOT NULL ENABLE)
-  ALTER TABLE "SCPOMGR"."UDT_GIDLIMITS_NA_BKUP1002" MODIFY ("LOC" NOT NULL ENABLE)
